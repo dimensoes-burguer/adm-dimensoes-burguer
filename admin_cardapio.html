@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editor de Cardápio - Dimensões Burguer</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<style>
+:root{--green:#00c853;--purple:#6b21a8;--dark:#111827;--line:#e5e7eb;--bg:#f6f7fb}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:#111}
+.lock{position:fixed;inset:0;background:linear-gradient(135deg,#111827,#2e1065,#052e16);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;color:white}
+.login{background:white;color:#111;border-radius:22px;padding:24px;max-width:360px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.35)}.login h1{margin:0 0 8px}.login input{width:100%;padding:14px;border:1px solid #ddd;border-radius:12px;font-size:16px;margin:12px 0}button{border:0;border-radius:12px;padding:10px 13px;font-weight:900;cursor:pointer}.primary{background:var(--green);color:white}.purple{background:var(--purple);color:white}.danger{background:#dc2626;color:white}.gray{background:#e5e7eb;color:#111}.small{padding:7px 9px;font-size:12px}
+.top{background:#111827;color:white;padding:14px 18px;position:sticky;top:0;z-index:10;box-shadow:0 3px 14px rgba(0,0,0,.18)}.top-inner{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px}.top h1{font-size:19px;margin:0}.top p{margin:4px 0 0;color:#d1d5db;font-size:13px}
+.main{max-width:1180px;margin:18px auto;padding:0 12px;display:grid;grid-template-columns:340px 1fr;gap:16px}.panel{background:white;border-radius:18px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.06);border:1px solid #eee}.panel h2{margin:0 0 12px;font-size:18px}
+.category-card,.item-card{border:1px solid var(--line);border-radius:14px;padding:12px;margin:8px 0;background:#fff}.category-card.active{border-color:var(--purple);box-shadow:0 0 0 2px rgba(107,33,168,.12)}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.spread{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.muted{color:#6b7280;font-size:13px}.name{font-weight:900}input,textarea,select{width:100%;padding:11px;border:1px solid #ddd;border-radius:12px;font-size:14px}label{display:block;font-weight:800;margin:10px 0 5px}textarea{min-height:82px}.form-grid{display:grid;grid-template-columns:1fr 140px;gap:10px}.photo-prev{width:76px;height:62px;object-fit:cover;border-radius:12px;background:#eee}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.hidden{display:none}.ok{background:#dcfce7;color:#166534;padding:10px;border-radius:12px;margin:10px 0;display:none}.warn{background:#fef3c7;color:#92400e;padding:10px;border-radius:12px;margin:10px 0}
+@media(max-width:850px){.main{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="lock" class="lock"><div class="login">
+  <h1>🔒 Editor do Cardápio</h1><p>Digite a senha para editar o cardápio web.</p>
+  <input id="senha" type="password" placeholder="Senha">
+  <button class="primary" style="width:100%" onclick="entrar()">Entrar</button>
+  <p class="muted">LOGIN ADMINISTRATIVO</p>
+</div></div>
+<header class="top"><div class="top-inner"><div><h1>🌀 Editor de Cardápio Web</h1><p>Adicione categorias, itens, descrições, preços, fotos e ordem de exibição.</p></div><button class="primary" onclick="salvarTudo()">Salvar no Firebase</button></div></header>
+<main class="main">
+  <section class="panel">
+    <h2>Categorias</h2>
+    <div class="toolbar"><button class="primary" onclick="novaCategoria()">+ Categoria</button><button class="gray" onclick="carregar()">Recarregar</button></div>
+    <div id="msg" class="ok"></div>
+    <div class="warn">Use <b>link de imagem</b> no campo foto. Exemplo: Imgur, Firebase Storage, Google Drive público direto etc.</div>
+    <div id="categorias"></div>
+  </section>
+  <section class="panel">
+    <h2 id="tituloEdicao">Selecione uma categoria</h2>
+    <div id="editorCategoria" class="hidden">
+      <label>Nome da categoria</label>
+      <input id="catNome" oninput="atualizarCategoriaAtual()" placeholder="Ex: Lanches Individuais">
+      <label><input type="checkbox" id="catAtivo" onchange="atualizarCategoriaAtual()" style="width:auto"> Categoria ativa no site</label>
+      <div class="toolbar"><button class="primary" onclick="novoItem()">+ Item</button><button class="danger" onclick="excluirCategoriaAtual()">Excluir categoria</button></div>
+      <h2>Itens</h2>
+      <div id="itens"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAEFQV4CyUXSh-tswjS8Qx25Tk2aCDS6uQ",
+    authDomain: "dimensoesburguer-85c0f.firebaseapp.com",
+    databaseURL: "https://dimensoesburguer-85c0f-default-rtdb.firebaseio.com",
+    projectId: "dimensoesburguer-85c0f",
+    storageBucket: "dimensoesburguer-85c0f.firebasestorage.app",
+    messagingSenderId: "1076735315482",
+    appId: "1:1076735315482:web:0c8ea700c852df7faecba3"
+};
+
+
+const cardapioInicial = {
+  categorias: {
+    cat_lanches: { id:"cat_lanches", nome:"Lanches Individuais", ordem:1, ativo:true, itens:{
+      i1:{id:"i1",nome:"BARATIN",preco:14.99,descricao:"Hambúrguer simples, direto e saboroso para matar a fome sem pesar no bolso.",foto:"",ordem:1,ativo:true},
+      i2:{id:"i2",nome:"SMASH 1.0",preco:19.99,descricao:"Smash burger com carne suculenta, cheddar, salada e molho da casa.",foto:"",ordem:2,ativo:true},
+      i3:{id:"i3",nome:"SMASH 2.0",preco:27.99,descricao:"Dois smash burgers com cheddar derretido e sabor dimensional.",foto:"",ordem:3,ativo:true},
+      i4:{id:"i4",nome:"SMASH 3.0",preco:33.99,descricao:"Três carnes smash para quem quer uma experiência mais intensa.",foto:"",ordem:4,ativo:true},
+      i5:{id:"i5",nome:"ONION RINGS",preco:29.99,descricao:"Burger com anéis de cebola crocantes e molho especial.",foto:"",ordem:5,ativo:true},
+      i6:{id:"i6",nome:"ANÉIS DE SATURNO",preco:26.99,descricao:"Combinação crocante inspirada na dimensão dos anéis.",foto:"",ordem:6,ativo:true},
+      i7:{id:"i7",nome:"VULCANO",preco:24.99,descricao:"Burger intenso, cremoso e marcante.",foto:"",ordem:7,ativo:true},
+      i8:{id:"i8",nome:"VULCANO DIMENSIONAL",preco:31.99,descricao:"Versão mais forte do Vulcano, com presença dimensional.",foto:"",ordem:8,ativo:true}
+    }},
+    cat_combos: { id:"cat_combos", nome:"Combos Individuais", ordem:2, ativo:true, itens:{
+      c1:{id:"c1",nome:"COMBO BARATIN",preco:25.99,descricao:"Baratin acompanhado de batata e refrigerante lata.",foto:"",ordem:1,ativo:true},
+      c2:{id:"c2",nome:"COMBO SMASH 1.0",preco:31.99,descricao:"Smash 1.0 com batata e refrigerante lata.",foto:"",ordem:2,ativo:true},
+      c3:{id:"c3",nome:"COMBO SMASH 2.0",preco:38.99,descricao:"Smash 2.0 com batata e refrigerante lata.",foto:"",ordem:3,ativo:true},
+      c4:{id:"c4",nome:"COMBO SMASH 3.0",preco:46.99,descricao:"Smash 3.0 com batata e refrigerante lata.",foto:"",ordem:4,ativo:true},
+      c5:{id:"c5",nome:"COMBO ONION RINGS",preco:41.99,descricao:"Onion Rings com batata e refrigerante lata.",foto:"",ordem:5,ativo:true},
+      c6:{id:"c6",nome:"COMBO ANÉIS DE SATURNO",preco:36.99,descricao:"Anéis de Saturno com batata e refrigerante lata.",foto:"",ordem:6,ativo:true},
+      c7:{id:"c7",nome:"COMBO VULCANO",preco:35.99,descricao:"Vulcano com batata e refrigerante lata.",foto:"",ordem:7,ativo:true},
+      c8:{id:"c8",nome:"COMBO VULCANO DIMENSIONAL",preco:44.99,descricao:"Vulcano Dimensional com batata e refrigerante lata.",foto:"",ordem:8,ativo:true}
+    }},
+    cat_familia: { id:"cat_familia", nome:"Combos Família", ordem:3, ativo:true, itens:{
+      f1:{id:"f1",nome:"COMBO 2 SMASH 2.0 + BATATA + REFRI LATA",preco:54.99,descricao:"Dois Smash 2.0, batata e refrigerante lata.",foto:"",ordem:1,ativo:true},
+      f2:{id:"f2",nome:"COMBO 4 SMASH 2.0 + 2 BATATA + REFRI 1L",preco:94.99,descricao:"Quatro Smash 2.0, duas batatas e Guaraná 1L.",foto:"",ordem:2,ativo:true},
+      f3:{id:"f3",nome:"COMBO 2 SMASH 3.0 + BATATA + REFRI LATA",preco:69.99,descricao:"Dois Smash 3.0, batata e refrigerante lata.",foto:"",ordem:3,ativo:true},
+      f4:{id:"f4",nome:"COMBO 2 VULCANO + BATATA + REFRI LATA",preco:54.99,descricao:"Dois Vulcano, batata e refrigerante lata.",foto:"",ordem:4,ativo:true},
+      f5:{id:"f5",nome:"COMBO 2 VULCANO D. + BATATA + REFRI LATA",preco:59.99,descricao:"Dois Vulcano Dimensional, batata e refrigerante lata.",foto:"",ordem:5,ativo:true}
+    }},
+    cat_porcoes: { id:"cat_porcoes", nome:"Porções", ordem:4, ativo:true, itens:{
+      p1:{id:"p1",nome:"PORÇÃO DE BATATA FRITA",preco:9.99,descricao:"Porção de batata frita crocante.",foto:"",ordem:1,ativo:true},
+      p2:{id:"p2",nome:"PORÇÃO DE ONION RINGS",preco:10.99,descricao:"Anéis de cebola crocantes.",foto:"",ordem:2,ativo:true}
+    }},
+    cat_bebidas: { id:"cat_bebidas", nome:"Bebidas", ordem:5, ativo:true, itens:{
+      b1:{id:"b1",nome:"COCA COLA LATA",preco:5.00,descricao:"Refrigerante lata.",foto:"",ordem:1,ativo:true},
+      b2:{id:"b2",nome:"COCA COLA ZERO LATA",preco:5.00,descricao:"Refrigerante lata zero açúcar.",foto:"",ordem:2,ativo:true},
+      b3:{id:"b3",nome:"GUARANA LATA",preco:5.00,descricao:"Guaraná lata.",foto:"",ordem:3,ativo:true},
+      b4:{id:"b4",nome:"SUKITA LATA",preco:5.00,descricao:"Sukita lata.",foto:"",ordem:4,ativo:true},
+      b5:{id:"b5",nome:"SODA LATA",preco:5.00,descricao:"Soda lata.",foto:"",ordem:5,ativo:true},
+      b6:{id:"b6",nome:"GUARANA 1L",preco:7.00,descricao:"Guaraná 1 litro.",foto:"",ordem:6,ativo:true},
+      b7:{id:"b7",nome:"COCA COLA 600ml",preco:6.00,descricao:"Coca-Cola 600ml.",foto:"",ordem:7,ativo:true}
+    }}
+  }
+};
+
+const SENHA="GS1973";
+let database; try{firebase.initializeApp(firebaseConfig);database=firebase.database();}catch(e){alert("Erro Firebase: "+e.message)}
+let cardapio={categorias:{}}, categoriaAtual=null;
+
+function entrar(){if(document.getElementById("senha").value===SENHA)document.getElementById("lock").style.display="none";else alert("Senha incorreta");}
+document.getElementById("senha").addEventListener("keydown",e=>{if(e.key==="Enter")entrar()});
+function uid(p="id"){return p+"_"+Date.now()+"_"+Math.floor(Math.random()*9999)}
+function cats(){return Object.values(cardapio.categorias||{}).sort((a,b)=>(a.ordem||999)-(b.ordem||999))}
+function itens(cat){return Object.values(cat.itens||{}).sort((a,b)=>(a.ordem||999)-(b.ordem||999))}
+function moeda(n){return "R$ "+Number(n||0).toFixed(2).replace(".",",")}
+async function garantirInicial(){const s=await database.ref("cardapio_web").once("value"); if(!s.exists()) await database.ref("cardapio_web").set(cardapioInicial);}
+async function carregar(){await garantirInicial(); const s=await database.ref("cardapio_web").once("value"); cardapio=s.val()||cardapioInicial; renderCategorias(); if(categoriaAtual && !cardapio.categorias[categoriaAtual]) categoriaAtual=null; renderEditor();}
+function mostrarMsg(t){const m=document.getElementById("msg");m.textContent=t;m.style.display="block";setTimeout(()=>m.style.display="none",2500)}
+function renderCategorias(){
+  const box=document.getElementById("categorias"); box.innerHTML="";
+  cats().forEach((c,idx,arr)=>{
+    box.innerHTML+=`<div class="category-card ${c.id===categoriaAtual?'active':''}">
+      <div class="spread"><div onclick="selecionarCategoria('${c.id}')" style="cursor:pointer"><div class="name">${c.nome||'Sem nome'}</div><div class="muted">${itens(c).length} item(ns) • Ordem ${c.ordem||0} • ${c.ativo!==false?'Ativa':'Oculta'}</div></div></div>
+      <div class="toolbar"><button class="small gray" onclick="moverCategoria('${c.id}',-1)">↑</button><button class="small gray" onclick="moverCategoria('${c.id}',1)">↓</button><button class="small purple" onclick="selecionarCategoria('${c.id}')">Editar</button></div>
+    </div>`;
+  });
+}
+function selecionarCategoria(id){categoriaAtual=id;renderCategorias();renderEditor();}
+function renderEditor(){
+  const panel=document.getElementById("editorCategoria"), titulo=document.getElementById("tituloEdicao");
+  if(!categoriaAtual||!cardapio.categorias[categoriaAtual]){panel.classList.add("hidden");titulo.textContent="Selecione uma categoria";return}
+  const c=cardapio.categorias[categoriaAtual]; panel.classList.remove("hidden"); titulo.textContent="Editando: "+(c.nome||"Sem nome");
+  document.getElementById("catNome").value=c.nome||""; document.getElementById("catAtivo").checked=c.ativo!==false;
+  const box=document.getElementById("itens"); box.innerHTML="";
+  itens(c).forEach(i=>{
+    const foto=i.foto?`<img src="${i.foto}" class="photo-prev" onerror="this.style.display='none'">`:`<div class="photo-prev" style="display:flex;align-items:center;justify-content:center">🍔</div>`;
+    box.innerHTML+=`<div class="item-card">
+      <div class="spread"><div><div class="name">${i.nome||'Sem nome'}</div><div class="muted">${moeda(i.preco)} • Ordem ${i.ordem||0} • ${i.ativo!==false?'Ativo':'Oculto'}</div></div>${foto}</div>
+      <label>Nome</label><input value="${escapeHtml(i.nome||'')}" oninput="editarItem('${i.id}','nome',this.value)">
+      <div class="form-grid"><div><label>Preço</label><input type="number" step="0.01" value="${Number(i.preco||0)}" oninput="editarItem('${i.id}','preco',this.value)"></div><div><label>Ativo</label><select onchange="editarItem('${i.id}','ativo',this.value==='true')"><option value="true" ${i.ativo!==false?'selected':''}>Sim</option><option value="false" ${i.ativo===false?'selected':''}>Não</option></select></div></div>
+      <label>Descrição</label><textarea oninput="editarItem('${i.id}','descricao',this.value)">${escapeHtml(i.descricao||'')}</textarea>
+      <label>Link da foto</label><input value="${escapeHtml(i.foto||'')}" placeholder="https://..." oninput="editarItem('${i.id}','foto',this.value)">
+      <div class="toolbar"><button class="small gray" onclick="moverItem('${i.id}',-1)">↑</button><button class="small gray" onclick="moverItem('${i.id}',1)">↓</button><button class="small danger" onclick="excluirItem('${i.id}')">Excluir item</button></div>
+    </div>`;
+  });
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function atualizarCategoriaAtual(){const c=cardapio.categorias[categoriaAtual]; if(!c)return; c.nome=document.getElementById("catNome").value; c.ativo=document.getElementById("catAtivo").checked; renderCategorias(); document.getElementById("tituloEdicao").textContent="Editando: "+c.nome;}
+function novaCategoria(){const id=uid("cat"); const ordem=cats().length+1; cardapio.categorias[id]={id,nome:"Nova categoria",ordem,ativo:true,itens:{}}; selecionarCategoria(id);}
+function excluirCategoriaAtual(){if(!categoriaAtual)return;if(confirm("Excluir esta categoria e todos os itens?")){delete cardapio.categorias[categoriaAtual];categoriaAtual=null;renderCategorias();renderEditor();}}
+function moverCategoria(id,dir){const arr=cats(),idx=arr.findIndex(c=>c.id===id),other=arr[idx+dir]; if(!other)return; const a=arr[idx].ordem,b=other.ordem; arr[idx].ordem=b; other.ordem=a; renderCategorias();}
+function novoItem(){const c=cardapio.categorias[categoriaAtual]; if(!c)return; if(!c.itens)c.itens={}; const id=uid("item"); c.itens[id]={id,nome:"Novo item",preco:0,descricao:"",foto:"",ordem:itens(c).length+1,ativo:true}; renderEditor();}
+function editarItem(id,campo,valor){const c=cardapio.categorias[categoriaAtual]; if(!c||!c.itens[id])return; if(campo==="preco") valor=Number(String(valor).replace(",","."))||0; c.itens[id][campo]=valor;}
+function excluirItem(id){const c=cardapio.categorias[categoriaAtual]; if(c&&confirm("Excluir este item?")){delete c.itens[id]; renderEditor();}}
+function moverItem(id,dir){const c=cardapio.categorias[categoriaAtual]; const arr=itens(c),idx=arr.findIndex(i=>i.id===id),other=arr[idx+dir]; if(!other)return; const a=arr[idx].ordem,b=other.ordem; arr[idx].ordem=b; other.ordem=a; renderEditor();}
+async function salvarTudo(){await database.ref("cardapio_web").set(cardapio); mostrarMsg("Cardápio salvo. O site atualiza na hora e o Python sincroniza em até 1 minuto.");}
+carregar();
+</script>
+</body>
+</html>
