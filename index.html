@@ -134,7 +134,7 @@ const SENHA="GS1973";
 let database; try{firebase.initializeApp(firebaseConfig);database=firebase.database();}catch(e){alert("Erro Firebase: "+e.message)}
 let cardapio={categorias:{}}, categoriaAtual=null;
 
-let cupons={}, cupomAtual=null;
+let cupons={}, cupomAtual=null, listenerCuponsAtivo=false;
 function mostrarAba(aba){
   document.getElementById('mainCardapio').classList.toggle('hidden', aba!=='cardapio');
   document.getElementById('mainCupons').classList.toggle('hidden', aba!=='cupons');
@@ -146,7 +146,21 @@ function mostrarAba(aba){
 }
 function codigoLimpo(c){return String(c||'').trim().toUpperCase().replace(/\s/g,'')}
 function mostrarMsgCupom(t){const m=document.getElementById('msgCupom');m.textContent=t;m.style.display='block';setTimeout(()=>m.style.display='none',2500)}
-async function carregarCupons(){const s=await database.ref('cupons').once('value'); cupons=s.val()||{}; renderCupons();}
+function iniciarListenerCupons(){
+  if(listenerCuponsAtivo || !database) return;
+  listenerCuponsAtivo=true;
+  database.ref('cupons').on('value', s=>{
+    cupons=s.val()||{};
+    renderCupons();
+    if(cupomAtual && cupons[cupomAtual]) selecionarCupom(cupomAtual);
+  });
+}
+async function carregarCupons(){
+  iniciarListenerCupons();
+  const s=await database.ref('cupons').once('value');
+  cupons=s.val()||{};
+  renderCupons();
+}
 function renderCupons(){
   const box=document.getElementById('listaCupons'); if(!box)return; box.innerHTML='';
   const arr=Object.values(cupons||{}).sort((a,b)=>String(a.codigo||'').localeCompare(String(b.codigo||'')));
@@ -222,6 +236,7 @@ function editarItem(id,campo,valor){const c=cardapio.categorias[categoriaAtual];
 function excluirItem(id){const c=cardapio.categorias[categoriaAtual]; if(c&&confirm("Excluir este item?")){delete c.itens[id]; renderEditor();}}
 function moverItem(id,dir){const c=cardapio.categorias[categoriaAtual]; const arr=itens(c),idx=arr.findIndex(i=>i.id===id),other=arr[idx+dir]; if(!other)return; const a=arr[idx].ordem,b=other.ordem; arr[idx].ordem=b; other.ordem=a; renderEditor();}
 async function salvarTudo(){await database.ref("cardapio_web").set(cardapio); mostrarMsg("Cardápio salvo. O site atualiza na hora e o Python sincroniza em até 1 minuto.");}
+iniciarListenerCupons();
 carregar();
 </script>
 </body>
