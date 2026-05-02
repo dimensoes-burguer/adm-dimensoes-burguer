@@ -84,6 +84,8 @@
     <h2 id="tituloAnuncio">Novo / editar anúncio</h2>
     <div class="hint-img"><b>Proporção recomendada:</b> 4:5 vertical, por exemplo <b>1080x1350</b> ou <b>800x1000</b>. Também funciona quadrada, mas a 4:5 fica mais bonita no card.</div>
     <label>Título do anúncio</label><input id="anuncioTitulo" placeholder="Ex: Combo dimensional de hoje">
+    <label>Texto abaixo do título</label><input id="anuncioSubtitulo" placeholder="Ex: Toque para abrir o link da promoção">
+    <label>Texto do botão</label><input id="anuncioTextoBotao" placeholder="Ex: Aproveitar promoção">
     <label>URL da imagem do anúncio</label><input id="anuncioImagem" placeholder="https://..." oninput="atualizarPreviewAnuncio()">
     <div style="margin:10px 0"><img id="anuncioPreview" class="ad-preview" alt="Prévia do anúncio" onerror="this.style.display='none'"></div>
     <div class="coupon-grid">
@@ -247,24 +249,34 @@ function renderSelectItensAnuncio(){
   if(atual) sel.value=atual;
 }
 function atualizarPreviewAnuncio(){const img=document.getElementById('anuncioPreview'); const url=document.getElementById('anuncioImagem').value.trim(); if(!img)return; if(url){img.src=url; img.style.display='block';}else{img.removeAttribute('src'); img.style.display='none';}}
-function atualizarAcaoAnuncio(){const acao=document.getElementById('anuncioAcao').value; document.getElementById('acaoLinkBox').classList.toggle('hidden', acao!=='link'); document.getElementById('acaoItemBox').classList.toggle('hidden', acao!=='item');}
+function atualizarAcaoAnuncio(){
+  const acao=document.getElementById('anuncioAcao').value;
+  document.getElementById('acaoLinkBox').classList.toggle('hidden', acao!=='link');
+  document.getElementById('acaoItemBox').classList.toggle('hidden', acao!=='item');
+  const sub=document.getElementById('anuncioSubtitulo');
+  const botao=document.getElementById('anuncioTextoBotao');
+  if(sub && !sub.value.trim()) sub.value = acao==='link' ? 'Toque para abrir o link da promoção.' : 'Toque para adicionar este item ao carrinho.';
+  if(botao && !botao.value.trim()) botao.value = 'Aproveitar promoção';
+}
 function limparFormAnuncio(){
   anuncioAtual=null;
-  ['anuncioTitulo','anuncioImagem','anuncioUrl'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('anuncioOrdem').value='1'; document.getElementById('anuncioAcao').value='item'; document.getElementById('anuncioAtivo').checked=true;
+  ['anuncioTitulo','anuncioSubtitulo','anuncioTextoBotao','anuncioImagem','anuncioUrl'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('anuncioOrdem').value='1'; document.getElementById('anuncioAcao').value='item'; document.getElementById('anuncioAtivo').checked=true; document.getElementById('anuncioSubtitulo').value='Toque para adicionar este item ao carrinho.'; document.getElementById('anuncioTextoBotao').value='Aproveitar promoção';
   document.getElementById('tituloAnuncio').textContent='Novo / editar anúncio'; atualizarAcaoAnuncio(); atualizarPreviewAnuncio(); renderAnuncios(); renderSelectItensAnuncio();
 }
 function novoAnuncio(){limparFormAnuncio();document.getElementById('anuncioTitulo').focus();}
 function selecionarAnuncio(id){
   const a=anuncios[id]; if(!a)return; anuncioAtual=id;
   document.getElementById('tituloAnuncio').textContent='Editando: '+(a.titulo||id);
-  document.getElementById('anuncioTitulo').value=a.titulo||''; document.getElementById('anuncioImagem').value=a.imagem||''; document.getElementById('anuncioOrdem').value=Number(a.ordem||1);
+  document.getElementById('anuncioTitulo').value=a.titulo||''; document.getElementById('anuncioSubtitulo').value=a.texto_subtitulo||''; document.getElementById('anuncioTextoBotao').value=a.texto_botao||'Aproveitar promoção'; document.getElementById('anuncioImagem').value=a.imagem||''; document.getElementById('anuncioOrdem').value=Number(a.ordem||1);
   document.getElementById('anuncioAcao').value=a.acao||'item'; document.getElementById('anuncioUrl').value=a.url||''; document.getElementById('anuncioAtivo').checked=a.ativo!==false;
   renderSelectItensAnuncio(); if(a.catId && a.itemId) document.getElementById('anuncioItem').value=a.catId+'|'+a.itemId;
   atualizarAcaoAnuncio(); atualizarPreviewAnuncio(); renderAnuncios();
 }
 async function salvarAnuncio(){
   const titulo=document.getElementById('anuncioTitulo').value.trim();
+  const texto_subtitulo=document.getElementById('anuncioSubtitulo').value.trim();
+  const texto_botao=document.getElementById('anuncioTextoBotao').value.trim();
   const imagem=document.getElementById('anuncioImagem').value.trim();
   if(!titulo){alert('Informe o título do anúncio.');return;}
   if(!imagem){alert('Informe a URL da imagem do anúncio.');return;}
@@ -276,7 +288,7 @@ async function salvarAnuncio(){
     const valor=document.getElementById('anuncioItem').value||''; [catId,itemId]=valor.split('|'); if(!catId||!itemId){alert('Escolha o item que será adicionado.');return;}
   }
   const id=anuncioAtual || uid('anuncio');
-  const a={id,titulo,imagem,ordem:Number(document.getElementById('anuncioOrdem').value||1),acao,url,catId,itemId,ativo:document.getElementById('anuncioAtivo').checked,atualizado_em:new Date().toISOString()};
+  const a={id,titulo,texto_subtitulo,texto_botao,imagem,ordem:Number(document.getElementById('anuncioOrdem').value||1),acao,url,catId,itemId,ativo:document.getElementById('anuncioAtivo').checked,atualizado_em:new Date().toISOString()};
   await database.ref('anuncios/'+id).set(a); anuncioAtual=id; await carregarAnuncios(); selecionarAnuncio(id); mostrarMsgAnuncio('Anúncio salvo com sucesso.');
 }
 async function excluirAnuncio(id){if(!id||!confirm('Excluir este anúncio?'))return; await database.ref('anuncios/'+id).remove(); if(anuncioAtual===id) limparFormAnuncio(); await carregarAnuncios(); mostrarMsgAnuncio('Anúncio excluído.');}
