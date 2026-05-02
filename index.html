@@ -3,144 +3,102 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dimensões Burguer</title>
+<title>Editor de Cardápio - Dimensões Burguer</title>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <style>
-:root { --green:#00c853; --purple:#6b21a8; --dark:#111827; --muted:#6b7280; --line:#e5e7eb; --bg:#f4f4f5; }
-*{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:#111;padding-bottom:96px}
-.top{background:linear-gradient(135deg,#101827,#221039 55%,#082f1b);color:white;padding:18px 16px 14px;position:sticky;top:0;z-index:50;box-shadow:0 4px 18px rgba(0,0,0,.18)}
-.brand{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:14px}
-.logo{width:78px;height:78px;border-radius:18px;overflow:hidden;background:#020b0a;display:flex;align-items:center;justify-content:center;box-shadow:0 0 22px rgba(0,200,83,.65)}
-.logo img{width:100%;height:100%;object-fit:cover;display:block}
-.brand h1{font-size:22px;margin:0;line-height:1.1} .brand p{margin:4px 0 0;color:#d1d5db;font-size:13px}
-.status{max-width:900px;margin:12px auto 0;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.12);font-size:14px;display:none}
-.status.fechado{display:block;background:#b91c1c;color:white;font-weight:800}
-.searchbar{max-width:900px;margin:12px auto 0;display:flex;gap:8px}
-.searchbar input{flex:1;border:0;border-radius:999px;padding:13px 16px;font-size:15px;outline:none}
-.category-tabs{position:sticky;top:102px;z-index:40;background:white;border-bottom:1px solid var(--line);overflow:auto;white-space:nowrap;padding:10px 8px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
-.category-tabs-inner{max-width:900px;margin:0 auto}
-.category-tabs a{display:inline-block;text-decoration:none;color:#111;padding:9px 14px;margin-right:8px;border-radius:999px;background:#f3f4f6;font-weight:700;font-size:14px}
-.category-tabs a.active{background:#111;color:white}
-.main{max-width:900px;margin:16px auto;padding:0 12px}
-.category{margin:22px 0 8px} .category h2{font-size:20px;margin:0 0 10px}
-.item{background:white;border-radius:16px;margin:10px 0;padding:12px;display:flex;gap:12px;box-shadow:0 1px 8px rgba(0,0,0,.06);cursor:pointer;border:1px solid #eee}
-.item:hover{box-shadow:0 4px 16px rgba(0,0,0,.12)} .item-info{flex:1;min-width:0}
-.item-title{font-size:16px;font-weight:800;margin:2px 0 5px} .item-desc{font-size:13px;color:var(--muted);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.item-price{font-weight:900;margin-top:10px;color:#111;font-size:16px}
-.thumb{width:106px;height:92px;border-radius:14px;background:#ececec;object-fit:cover;flex-shrink:0}
-.no-photo{width:106px;height:92px;border-radius:14px;background:radial-gradient(circle,#d1fae5,#e9d5ff);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
-.add-mini{border:0;background:var(--green);color:white;border-radius:50%;width:34px;height:34px;font-size:23px;font-weight:900;align-self:flex-end;cursor:pointer}
-.cart{position:fixed;left:0;right:0;bottom:0;background:white;border-radius:22px 22px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.18);max-width:900px;margin:0 auto;z-index:70;border:1px solid #eee}
-.cart-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;cursor:pointer}
-.cart-title{font-weight:900} .cart-body{display:none;max-height:42vh;overflow:auto;border-top:1px solid #eee;padding:10px 18px} .cart.open .cart-body{display:block}
-.cart-row{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #f1f1f1;font-size:14px}
-.remove{border:0;background:transparent;color:#dc2626;font-size:20px;cursor:pointer}
-.checkout{display:flex;gap:10px;align-items:center;padding:12px 18px;border-top:1px solid #eee}
-.total{font-weight:900;flex:1;font-size:18px} .checkout button,.primary{border:0;background:var(--green);color:white;border-radius:12px;padding:13px 16px;font-weight:900;cursor:pointer}
-.checkout button:disabled{background:#aaa;cursor:not-allowed}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.68);z-index:200;display:none;align-items:flex-end;justify-content:center}
-.modal.show{display:flex} .sheet{background:white;width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:24px 24px 0 0;color:#111}
-.sheet img{width:100%;height:260px;object-fit:cover;background:#eee} .sheet-content{padding:18px}
-.sheet h2{margin:0 0 8px;font-size:23px} .sheet p{color:#555;line-height:1.45} .close{position:absolute;right:15px;top:15px;border:0;background:white;border-radius:50%;width:38px;height:38px;font-size:22px;box-shadow:0 2px 10px rgba(0,0,0,.2);cursor:pointer}
-.form label{display:block;font-weight:800;margin:12px 0 6px} .form input,.form select,.form textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:12px;font-size:15px} .form textarea{min-height:80px}
-.actions{display:flex;gap:10px;margin-top:15px} .secondary{border:0;background:#e5e7eb;color:#111;border-radius:12px;padding:13px 16px;font-weight:900;cursor:pointer;flex:1} .primary{flex:1}
-.empty{padding:30px;text-align:center;color:#666;background:white;border-radius:16px}
-.coupon-line{display:flex;gap:8px}.coupon-line input{flex:1}.coupon-msg{font-size:13px;margin-top:6px;font-weight:800}.discount-row{color:#16a34a;font-weight:900}
-
-.ad-modal{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:180;display:none;align-items:center;justify-content:center;padding:22px}
-.ad-modal.show{display:flex}
-.ad-card{width:min(430px,92vw);background:white;border-radius:24px;overflow:hidden;position:relative;box-shadow:0 20px 70px rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.35);animation:adPop .18s ease-out;color:#111}
-@keyframes adPop{from{transform:scale(.96);opacity:.4}to{transform:scale(1);opacity:1}}
-.ad-close{position:absolute;right:12px;top:12px;width:38px;height:38px;border:0;border-radius:999px;background:rgba(17,24,39,.86);color:white;font-size:24px;line-height:38px;cursor:pointer;z-index:2;box-shadow:0 4px 14px rgba(0,0,0,.25)}
-.ad-img{width:100%;display:block;aspect-ratio:4/5;object-fit:cover;background:#111827;cursor:pointer}
-.ad-info{padding:13px 16px 16px;background:linear-gradient(180deg,#fff,#f9fafb)}
-.ad-title{font-weight:900;font-size:18px;margin-bottom:4px}.ad-sub{font-size:13px;color:#6b7280;line-height:1.35}.ad-action{margin-top:10px;background:var(--green);color:white;border-radius:12px;padding:11px 13px;text-align:center;font-weight:900;cursor:pointer}
-
-@media(min-width:700px){.modal{align-items:center}.sheet{border-radius:24px}}
+:root{--green:#00c853;--purple:#6b21a8;--dark:#111827;--line:#e5e7eb;--bg:#f6f7fb}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:#111}
+.lock{position:fixed;inset:0;background:linear-gradient(135deg,#111827,#2e1065,#052e16);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;color:white}
+.login{background:white;color:#111;border-radius:22px;padding:24px;max-width:360px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.35)}.login h1{margin:0 0 8px}.login input{width:100%;padding:14px;border:1px solid #ddd;border-radius:12px;font-size:16px;margin:12px 0}button{border:0;border-radius:12px;padding:10px 13px;font-weight:900;cursor:pointer}.primary{background:var(--green);color:white}.purple{background:var(--purple);color:white}.danger{background:#dc2626;color:white}.gray{background:#e5e7eb;color:#111}.small{padding:7px 9px;font-size:12px}
+.top{background:#111827;color:white;padding:14px 18px;position:sticky;top:0;z-index:10;box-shadow:0 3px 14px rgba(0,0,0,.18)}.top-inner{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px}.top h1{font-size:19px;margin:0}.top p{margin:4px 0 0;color:#d1d5db;font-size:13px}
+.main{max-width:1180px;margin:18px auto;padding:0 12px;display:grid;grid-template-columns:340px 1fr;gap:16px}.panel{background:white;border-radius:18px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.06);border:1px solid #eee}.panel h2{margin:0 0 12px;font-size:18px}
+.category-card,.item-card{border:1px solid var(--line);border-radius:14px;padding:12px;margin:8px 0;background:#fff}.category-card.active{border-color:var(--purple);box-shadow:0 0 0 2px rgba(107,33,168,.12)}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.spread{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.muted{color:#6b7280;font-size:13px}.name{font-weight:900}input,textarea,select{width:100%;padding:11px;border:1px solid #ddd;border-radius:12px;font-size:14px}label{display:block;font-weight:800;margin:10px 0 5px}textarea{min-height:82px}.form-grid{display:grid;grid-template-columns:1fr 140px;gap:10px}.photo-prev{width:76px;height:62px;object-fit:cover;border-radius:12px;background:#eee}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.hidden{display:none}.ok{background:#dcfce7;color:#166534;padding:10px;border-radius:12px;margin:10px 0;display:none}.warn{background:#fef3c7;color:#92400e;padding:10px;border-radius:12px;margin:10px 0}
+.tabs{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}.tabbtn{background:#374151;color:white}.tabbtn.active{background:var(--green)}.coupon-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.coupon-card,.ad-admin-card{border:1px solid var(--line);border-radius:14px;padding:12px;margin:8px 0;background:#fff}.coupon-card.active,.ad-admin-card.active{border-color:var(--green);box-shadow:0 0 0 2px rgba(0,200,83,.12)}.stats{display:flex;gap:8px;flex-wrap:wrap}.stat{background:#f3f4f6;border-radius:10px;padding:7px 9px;font-size:12px;font-weight:800}.ad-preview{width:100%;max-width:260px;aspect-ratio:4/5;object-fit:cover;border-radius:16px;background:#111827;border:1px solid #e5e7eb}.hint-img{background:#f8fafc;border:1px dashed #94a3b8;border-radius:14px;padding:12px;color:#475569;font-size:13px;line-height:1.45}
+@media(max-width:850px){.main{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header class="top">
-  <div class="brand"><div class="logo"><img src="logo-dimensoes-burguer.png" alt="Logo Dimensões Burguer"></div><div><h1>DIMENSÕES BURGUER</h1><p>Entre para a dimensão do sabor</p></div></div>
-  <div id="status" class="status"></div>
-  <div class="searchbar"><input id="search" placeholder="Buscar no cardápio..." oninput="renderCardapio()"></div>
-</header>
-<nav class="category-tabs"><div id="tabs" class="category-tabs-inner"></div></nav>
-<main id="menu" class="main"></main>
-
-<div id="adModal" class="ad-modal">
-  <div class="ad-card">
-    <button class="ad-close" onclick="fecharAnuncio()">×</button>
-    <img id="adImage" class="ad-img" src="" alt="Anúncio Dimensões Burguer" onclick="clicarAnuncioAtual()">
-    <div class="ad-info">
-      <div id="adTitle" class="ad-title">Promoção Dimensional</div>
-      <div id="adSub" class="ad-sub">Toque no anúncio para aproveitar.</div>
-      <div class="ad-action" onclick="clicarAnuncioAtual()">Aproveitar promoção</div>
+<div id="lock" class="lock"><div class="login">
+  <h1>🔒 Editor do Cardápio</h1><p>Digite a senha para editar o cardápio web.</p>
+  <input id="senha" type="password" placeholder="Senha">
+  <button class="primary" style="width:100%" onclick="entrar()">Entrar</button>
+  <p class="muted">Senha inicial: GS1973</p>
+</div></div>
+<header class="top"><div class="top-inner"><div><h1>🌀 Painel Administrativo</h1><p>Controle cardápio, fotos, ordem dos itens, cupons e anúncios.</p><div class="tabs"><button id="tabCardapio" class="tabbtn active" onclick="mostrarAba('cardapio')">Cardápio</button><button id="tabCupons" class="tabbtn" onclick="mostrarAba('cupons')">Cupons</button><button id="tabAnuncios" class="tabbtn" onclick="mostrarAba('anuncios')">Anúncios</button></div></div><button id="btnSalvarTopo" class="primary" onclick="salvarTudo()">Salvar cardápio</button></div></header>
+<main id="mainCardapio" class="main">
+  <section class="panel">
+    <h2>Categorias</h2>
+    <div class="toolbar"><button class="primary" onclick="novaCategoria()">+ Categoria</button><button class="gray" onclick="carregar()">Recarregar</button></div>
+    <div id="msg" class="ok"></div>
+    <div class="warn">Use <b>link de imagem</b> no campo foto. Exemplo: Imgur, Firebase Storage, Google Drive público direto etc.</div>
+    <div id="categorias"></div>
+  </section>
+  <section class="panel">
+    <h2 id="tituloEdicao">Selecione uma categoria</h2>
+    <div id="editorCategoria" class="hidden">
+      <label>Nome da categoria</label>
+      <input id="catNome" oninput="atualizarCategoriaAtual()" placeholder="Ex: Lanches Individuais">
+      <label><input type="checkbox" id="catAtivo" onchange="atualizarCategoriaAtual()" style="width:auto"> Categoria ativa no site</label>
+      <div class="toolbar"><button class="primary" onclick="novoItem()">+ Item</button><button class="danger" onclick="excluirCategoriaAtual()">Excluir categoria</button></div>
+      <h2>Itens</h2>
+      <div id="itens"></div>
     </div>
-  </div>
-</div>
+  </section>
+</main>
+<main id="mainCupons" class="main hidden">
+  <section class="panel">
+    <h2>Cupons cadastrados</h2>
+    <div class="toolbar"><button class="primary" onclick="novoCupom()">+ Cupom</button><button class="gray" onclick="carregarCupons()">Recarregar</button></div>
+    <div id="msgCupom" class="ok"></div>
+    <div class="warn">O código do cupom fica salvo em letras maiúsculas. Exemplo: <b>PORTAL10</b>. O limite por cliente é feito pelo telefone informado no pedido web.</div>
+    <div id="listaCupons"></div>
+  </section>
+  <section class="panel">
+    <h2 id="tituloCupom">Novo / editar cupom</h2>
+    <label>Nome da campanha</label><input id="cupomNome" placeholder="Ex: Promoção do portal">
+    <label>Código do cupom</label><input id="cupomCodigo" placeholder="Ex: PORTAL10" oninput="this.value=this.value.toUpperCase().replace(/\s/g,'')">
+    <div class="coupon-grid">
+      <div><label>Tipo de desconto</label><select id="cupomTipo"><option value="percentual">Porcentagem (%)</option><option value="valor">Valor fixo (R$)</option></select></div>
+      <div><label>Quantidade de desconto</label><input id="cupomValor" type="number" step="0.01" placeholder="Ex: 10"></div>
+      <div><label>Valor mínimo do pedido</label><input id="cupomValorMinimo" type="number" step="0.01" placeholder="Ex: 40"></div>
+      <div><label>Quantidade máxima de usos</label><input id="cupomUsosMax" type="number" step="1" placeholder="Ex: 50"></div>
+      <div><label>Usos já utilizados</label><input id="cupomUsosUsados" type="number" step="1" value="0"></div>
+      <div><label>Expira em</label><input id="cupomExpira" type="datetime-local"></div>
+    </div>
+    <label><input type="checkbox" id="cupomAtivo" style="width:auto" checked> Cupom ativo</label>
+    <label><input type="checkbox" id="cupomUmPorTelefone" style="width:auto" checked> Limitar 1 uso por telefone no site</label>
+    <div class="toolbar"><button class="primary" onclick="salvarCupom()">Salvar cupom</button><button class="danger" onclick="excluirCupomAtual()">Excluir cupom</button><button class="gray" onclick="limparFormCupom()">Limpar</button></div>
+  </section>
+</main>
 
-<div id="cartBox" class="cart">
-  <div class="cart-head" onclick="toggleCart()"><span class="cart-title">🛒 Seu carrinho</span><span id="cartCount">0 item</span></div>
-  <div id="cartBody" class="cart-body"><div id="cartItems"></div></div>
-  <div class="checkout"><div id="total" class="total">R$ 0,00</div><button id="checkoutBtn" onclick="showOrderModal()" disabled>Continuar</button></div>
-</div>
-
-<div id="itemModal" class="modal"><div class="sheet" style="position:relative"><button class="close" onclick="closeItemModal()">×</button><div id="itemModalContent"></div></div></div>
-
-
-<div id="optionsModal" class="modal"><div class="sheet"><div class="sheet-content form">
-  <h2 id="optionsTitle">Escolha as opções</h2>
-  <div id="paoBox">
-    <label>Escolha o pão *</label>
-    <select id="paoSelect">
-      <option value="Brioche liso">Brioche liso</option>
-      <option value="Brioche premium">Brioche premium</option>
-      <option value="Pão australiano">Pão australiano</option>
-    </select>
-  </div>
-  <div id="refriBox">
-    <label>Escolha o refrigerante lata *</label>
-    <select id="refriSelect">
-      <option value="SODA">Soda Limonada</option>
-      <option value="SUKITA LARANJA">Sukita Laranja</option>
-      <option value="COCA-COLA">Coca-Cola</option>
-      <option value="COCA-COLA ZERO">Coca-Cola Zero</option>
-      <option value="GUARANÁ">Guaraná</option>
-    </select>
-  </div>
-  <div class="actions">
-    <button class="secondary" onclick="hideOptionsModal()">Cancelar</button>
-    <button class="primary" onclick="confirmOptionsChoice()">Adicionar</button>
-  </div>
-</div></div></div>
-
-<div id="orderModal" class="modal"><div class="sheet"><div class="sheet-content form">
-  <h2>Finalizar pedido</h2>
-  <label>Seu nome *</label><input id="nome" placeholder="Digite seu nome">
-  <label>Telefone / WhatsApp *</label><input id="telefone" placeholder="Ex: 62991014682" inputmode="tel">
-  <label>Cupom de desconto</label>
-  <div class="coupon-line"><input id="cupomInput" placeholder="Ex: PORTAL10"><button type="button" class="secondary" onclick="limparCupom()">Limpar</button><button type="button" class="primary" onclick="aplicarCupom()">Aplicar</button></div>
-  <div id="cupomMsg" class="coupon-msg"></div>
-  <label>Forma de recebimento *</label>
-  <select id="tipoRecebimento" onchange="atualizarTipoRecebimento()">
-    <option value="DELIVERY WEB">Entrega</option>
-    <option value="RETIRADA">Retirada no balcão</option>
-  </select>
-  <div id="deliveryBox">
-    <button type="button" class="primary" style="width:100%;margin-top:12px" onclick="calculateDelivery()">📍 Calcular frete com minha localização *</button>
-    <div id="freteInfo" style="margin-top:10px;color:#333"></div>
-    <label>Endereço completo *</label><input id="endereco" placeholder="Rua, número e bairro">
-  </div>
-  <div id="retiradaInfo" style="display:none;margin-top:10px;padding:10px;border-radius:10px;background:#ecfdf5;color:#14532d;font-weight:800">✅ Retirada no balcão selecionada. Não será cobrada taxa de entrega.</div>
-  <label>Observações</label><textarea id="obs" placeholder="Ex: tirar cebola, ponto da carne..."></textarea>
-  <label>Forma de pagamento *</label><select id="pagamento" onchange="toggleTroco()"><option>Dinheiro</option><option>Cartão de Crédito</option><option>Cartão de Débito</option><option>Pix</option></select>
-  <div id="trocoBox"><label>Troco para quanto?</label><input id="troco" type="number" placeholder="Ex: 50"></div>
-  <div id="orderSummary" class="order-summary"></div>
-  <div class="actions"><button class="secondary" onclick="hideOrderModal()">Cancelar</button><button class="primary" onclick="enviarPedido()">Enviar pedido</button></div>
-</div></div></div>
+<main id="mainAnuncios" class="main hidden">
+  <section class="panel">
+    <h2>Anúncios cadastrados</h2>
+    <div class="toolbar"><button class="primary" onclick="novoAnuncio()">+ Anúncio</button><button class="gray" onclick="carregarAnuncios()">Recarregar</button></div>
+    <div id="msgAnuncio" class="ok"></div>
+    <div class="warn">Esses cards aparecem quando o cliente entra no cardápio web. O cliente pode fechar no X. O anúncio não cobre 100% da tela, deixando o fundo visível.</div>
+    <div id="listaAnuncios"></div>
+  </section>
+  <section class="panel">
+    <h2 id="tituloAnuncio">Novo / editar anúncio</h2>
+    <div class="hint-img"><b>Proporção recomendada:</b> 4:5 vertical, por exemplo <b>1080x1350</b> ou <b>800x1000</b>. Também funciona quadrada, mas a 4:5 fica mais bonita no card.</div>
+    <label>Título do anúncio</label><input id="anuncioTitulo" placeholder="Ex: Combo dimensional de hoje">
+    <label>URL da imagem do anúncio</label><input id="anuncioImagem" placeholder="https://..." oninput="atualizarPreviewAnuncio()">
+    <div style="margin:10px 0"><img id="anuncioPreview" class="ad-preview" alt="Prévia do anúncio" onerror="this.style.display='none'"></div>
+    <div class="coupon-grid">
+      <div><label>Ordem</label><input id="anuncioOrdem" type="number" step="1" value="1"></div>
+      <div><label>Ação ao clicar</label><select id="anuncioAcao" onchange="atualizarAcaoAnuncio()"><option value="item">Adicionar item ao carrinho</option><option value="link">Redirecionar para link</option></select></div>
+    </div>
+    <div id="acaoLinkBox" class="hidden"><label>Link de destino</label><input id="anuncioUrl" placeholder="https://wa.me/... ou https://..."></div>
+    <div id="acaoItemBox">
+      <label>Item que será adicionado ao carrinho</label>
+      <select id="anuncioItem"></select>
+    </div>
+    <label><input type="checkbox" id="anuncioAtivo" style="width:auto" checked> Anúncio ativo</label>
+    <div class="toolbar"><button class="primary" onclick="salvarAnuncio()">Salvar anúncio</button><button class="danger" onclick="excluirAnuncioAtual()">Excluir anúncio</button><button class="gray" onclick="limparFormAnuncio()">Limpar</button></div>
+  </section>
+</main>
 
 <script>
 
@@ -200,403 +158,180 @@ const cardapioInicial = {
   }
 };
 
-let database; try { firebase.initializeApp(firebaseConfig); database=firebase.database(); } catch(e){ console.error(e); }
-const numeroHamburgueria="5562991014682";
-const hamburgueriaCoords={lat:-16.650244,lon:-49.153223};
-let cardapio={categorias:{}}, cart=[], lojaAbertaManual=false, taxaFrete=0, clienteLatitude=null, clienteLongitude=null, itemAberto=null, opcaoPendente=null, cupomAplicado=null, anuncios={}, anuncioAtual=null;
+const SENHA="GS1973";
+let database; try{firebase.initializeApp(firebaseConfig);database=firebase.database();}catch(e){alert("Erro Firebase: "+e.message)}
+let cardapio={categorias:{}}, categoriaAtual=null;
 
-function moeda(v){return "R$ "+Number(v||0).toFixed(2).replace(".",",")}
-function uid(prefix="id"){return prefix+"_"+Date.now()+"_"+Math.floor(Math.random()*9999)}
-function cats(){return Object.values(cardapio.categorias||{}).filter(c=>c.ativo!==false).sort((a,b)=>(a.ordem||999)-(b.ordem||999))}
-function itens(cat){return Object.values(cat.itens||{}).filter(i=>i.ativo!==false).sort((a,b)=>(a.ordem||999)-(b.ordem||999))}
-function short(t,n=95){t=t||"";return t.length>n?t.slice(0,n)+"...":t}
-
-async function garantirCardapioInicial(){
-  const snap=await database.ref("cardapio_web").once("value");
-  if(!snap.exists()) await database.ref("cardapio_web").set(cardapioInicial);
+let cupons={}, cupomAtual=null, listenerCuponsAtivo=false;
+let anuncios={}, anuncioAtual=null, listenerAnunciosAtivo=false;
+function mostrarAba(aba){
+  document.getElementById('mainCardapio').classList.toggle('hidden', aba!=='cardapio');
+  document.getElementById('mainCupons').classList.toggle('hidden', aba!=='cupons');
+  document.getElementById('mainAnuncios').classList.toggle('hidden', aba!=='anuncios');
+  document.getElementById('tabCardapio').classList.toggle('active', aba==='cardapio');
+  document.getElementById('tabCupons').classList.toggle('active', aba==='cupons');
+  document.getElementById('tabAnuncios').classList.toggle('active', aba==='anuncios');
+  document.getElementById('btnSalvarTopo').textContent = aba==='cardapio' ? 'Salvar cardápio' : (aba==='cupons' ? 'Salvar cupom' : 'Salvar anúncio');
+  document.getElementById('btnSalvarTopo').onclick = aba==='cardapio' ? salvarTudo : (aba==='cupons' ? salvarCupom : salvarAnuncio);
+  if(aba==='cupons') carregarCupons();
+  if(aba==='anuncios'){ carregarAnuncios(); renderSelectItensAnuncio(); }
 }
-
-function iniciar(){
-  if(!database) return;
-  garantirCardapioInicial();
-  database.ref("cardapio_web").on("value",s=>{ cardapio=s.val()||cardapioInicial; renderCardapio(); });
-  database.ref("anuncios").on("value",s=>{ anuncios=s.val()||{}; setTimeout(mostrarAnuncioInicial, 700); });
-  database.ref("config/loja_aberta").on("value",s=>{ const v=s.val(); lojaAbertaManual=(v===null)?true:!!v; atualizarLoja(); updateCart(); });
-}
-
-function atualizarLoja(){
-  const st=document.getElementById("status");
-  const btn=document.getElementById("checkoutBtn");
-  if(!lojaAbertaManual){st.className="status fechado";st.textContent="🔴 Loja fechada temporariamente";btn.textContent="LOJA FECHADA";btn.disabled=true;}
-  else{st.className="status";st.textContent="";btn.textContent="Continuar";btn.disabled=cart.length===0;}
-}
-
-function renderCardapio(){
-  const q=(document.getElementById("search").value||"").toLowerCase().trim();
-  const tabs=document.getElementById("tabs"), menu=document.getElementById("menu");
-  tabs.innerHTML=""; menu.innerHTML="";
-  const categorias=cats();
-  categorias.forEach(cat=>{ tabs.innerHTML += `<a href="#${cat.id}">${cat.nome}</a>`; });
-  let totalMostrado=0;
-  categorias.forEach(cat=>{
-    const lista=itens(cat).filter(i=>!q || (i.nome||"").toLowerCase().includes(q) || (i.descricao||"").toLowerCase().includes(q));
-    if(!lista.length) return;
-    totalMostrado += lista.length;
-    const sec=document.createElement("section"); sec.className="category"; sec.id=cat.id;
-    sec.innerHTML=`<h2>${cat.nome}</h2>`;
-    lista.forEach(item=>{
-      const foto=item.foto?`<img class="thumb" src="${item.foto}" onerror="this.outerHTML='<div class=\'no-photo\'>🍔</div>'">`:`<div class="no-photo">🍔</div>`;
-      sec.innerHTML += `<div class="item" onclick="openItem('${cat.id}','${item.id}')">
-        <div class="item-info"><div class="item-title">${item.nome}</div><div class="item-desc">${short(item.descricao||'Clique para ver detalhes do item.')}</div><div class="item-price">${moeda(item.preco)}</div></div>
-        ${foto}<button class="add-mini" onclick="event.stopPropagation();addToCartById('${cat.id}','${item.id}')">+</button>
-      </div>`;
-    });
-    menu.appendChild(sec);
+function codigoLimpo(c){return String(c||'').trim().toUpperCase().replace(/\s/g,'')}
+function mostrarMsgCupom(t){const m=document.getElementById('msgCupom');m.textContent=t;m.style.display='block';setTimeout(()=>m.style.display='none',2500)}
+function iniciarListenerCupons(){
+  if(listenerCuponsAtivo || !database) return;
+  listenerCuponsAtivo=true;
+  database.ref('cupons').on('value', s=>{
+    cupons=s.val()||{};
+    renderCupons();
+    if(cupomAtual && cupons[cupomAtual]) selecionarCupom(cupomAtual);
   });
-  if(!totalMostrado) menu.innerHTML='<div class="empty">Nenhum item encontrado.</div>';
-  atualizarLoja();
-  atualizarResumoPedido();
 }
-
-function getItem(catId,itemId){const c=(cardapio.categorias||{})[catId]; return c && c.itens ? c.itens[itemId] : null}
-function getCategoria(catId){return (cardapio.categorias||{})[catId] || null}
-function normalizar(txt){return String(txt||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase()}
-function tipoOpcoes(catId,item){
-  const cat=getCategoria(catId);
-  const nome=normalizar(item && item.nome);
-  const categoria=normalizar(cat && cat.nome);
-
-  if(categoria.includes("LANCHES INDIVIDUAIS")){
-    if(nome !== "BARATIN") return {pao:true, refri:false};
-    return {pao:false, refri:false};
-  }
-
-  if(categoria.includes("COMBOS INDIVIDUAIS")){
-    if(nome.includes("BARATIN")) return {pao:false, refri:true};
-    return {pao:true, refri:true};
-  }
-
-  return {pao:false, refri:false};
+async function carregarCupons(){
+  iniciarListenerCupons();
+  const s=await database.ref('cupons').once('value');
+  cupons=s.val()||{};
+  renderCupons();
 }
-function montarDetalhes(opcoes){
-  const partes=[];
-  if(opcoes && opcoes.pao) partes.push("Pão: "+opcoes.pao);
-  if(opcoes && opcoes.refri) partes.push("Refri: "+opcoes.refri);
-  return partes.join(" | ");
+function renderCupons(){
+  const box=document.getElementById('listaCupons'); if(!box)return; box.innerHTML='';
+  const arr=Object.values(cupons||{}).sort((a,b)=>String(a.codigo||'').localeCompare(String(b.codigo||'')));
+  if(!arr.length){box.innerHTML='<div class="muted">Nenhum cupom cadastrado.</div>';return;}
+  arr.forEach(c=>{
+    const usosMax=Number(c.usos_maximos||0); const usados=Number(c.usos_usados||0);
+    const desconto=c.tipo==='percentual'?`${Number(c.valor||0)}%`:`R$ ${Number(c.valor||0).toFixed(2).replace('.',',')}`;
+    box.innerHTML+=`<div class="coupon-card ${c.codigo===cupomAtual?'active':''}">
+      <div class="spread"><div onclick="selecionarCupom('${c.codigo}')" style="cursor:pointer"><div class="name">${escapeHtml(c.codigo||'')}</div><div class="muted">${escapeHtml(c.nome||'Sem nome')} • ${c.ativo!==false?'Ativo':'Inativo'}</div></div></div>
+      <div class="stats"><span class="stat">Desconto: ${desconto}</span><span class="stat">Usos: ${usados}/${usosMax||'∞'}</span><span class="stat">Mín: R$ ${Number(c.valor_minimo||0).toFixed(2).replace('.',',')}</span></div>
+      <div class="toolbar"><button class="small purple" onclick="selecionarCupom('${c.codigo}')">Editar</button><button class="small danger" onclick="excluirCupom('${c.codigo}')">Excluir</button></div>
+    </div>`;
+  });
 }
-function openItem(catId,itemId){
-  itemAberto=getItem(catId,itemId); if(!itemAberto)return;
-  const foto=itemAberto.foto?`<img src="${itemAberto.foto}">`:`<div style="height:220px;display:flex;align-items:center;justify-content:center;font-size:64px;background:radial-gradient(circle,#d1fae5,#e9d5ff)">🍔</div>`;
-  document.getElementById("itemModalContent").innerHTML=`${foto}<div class="sheet-content"><h2>${itemAberto.nome}</h2><p>${itemAberto.descricao||'Item especial da Dimensões Burguer.'}</p><h2>${moeda(itemAberto.preco)}</h2><button class="primary" style="width:100%" onclick="addToCart(itemAberto, '${catId}');closeItemModal()">Adicionar ao carrinho</button></div>`;
-  document.getElementById("itemModal").classList.add("show");
+function limparFormCupom(){cupomAtual=null;['cupomNome','cupomCodigo','cupomValor','cupomValorMinimo','cupomUsosMax','cupomUsosUsados','cupomExpira'].forEach(id=>document.getElementById(id).value='');document.getElementById('cupomTipo').value='percentual';document.getElementById('cupomAtivo').checked=true;document.getElementById('cupomUmPorTelefone').checked=true;document.getElementById('tituloCupom').textContent='Novo / editar cupom';renderCupons();}
+function novoCupom(){limparFormCupom();document.getElementById('cupomCodigo').focus();}
+function selecionarCupom(codigo){const c=cupons[codigo]; if(!c)return; cupomAtual=codigo; document.getElementById('tituloCupom').textContent='Editando: '+codigo; document.getElementById('cupomNome').value=c.nome||''; document.getElementById('cupomCodigo').value=c.codigo||codigo; document.getElementById('cupomTipo').value=c.tipo||'percentual'; document.getElementById('cupomValor').value=Number(c.valor||0); document.getElementById('cupomValorMinimo').value=Number(c.valor_minimo||0); document.getElementById('cupomUsosMax').value=Number(c.usos_maximos||0); document.getElementById('cupomUsosUsados').value=Number(c.usos_usados||0); document.getElementById('cupomExpira').value=c.expira_em||''; document.getElementById('cupomAtivo').checked=c.ativo!==false; document.getElementById('cupomUmPorTelefone').checked=c.um_por_telefone!==false; renderCupons();}
+async function salvarCupom(){
+  const codigo=codigoLimpo(document.getElementById('cupomCodigo').value); if(!codigo){alert('Informe o código do cupom.');return;}
+  const antigo=cupomAtual && cupomAtual!==codigo ? cupomAtual : null;
+  const c={nome:document.getElementById('cupomNome').value.trim(),codigo,tipo:document.getElementById('cupomTipo').value,valor:Number(document.getElementById('cupomValor').value||0),valor_minimo:Number(document.getElementById('cupomValorMinimo').value||0),usos_maximos:Number(document.getElementById('cupomUsosMax').value||0),usos_usados:Number(document.getElementById('cupomUsosUsados').value||0),expira_em:document.getElementById('cupomExpira').value,ativo:document.getElementById('cupomAtivo').checked,um_por_telefone:document.getElementById('cupomUmPorTelefone').checked,atualizado_em:new Date().toISOString()};
+  if(antigo) await database.ref('cupons/'+antigo).remove();
+  await database.ref('cupons/'+codigo).set(c); cupomAtual=codigo; await carregarCupons(); selecionarCupom(codigo); mostrarMsgCupom('Cupom salvo com sucesso.');
 }
-function closeItemModal(){document.getElementById("itemModal").classList.remove("show")}
-function addToCartById(catId,itemId){const i=getItem(catId,itemId); if(i)addToCart(i, catId)}
-function addToCart(item, catId=null){
-  if(!lojaAbertaManual){alert("A loja está fechada.");return}
-  const opcoes=catId ? tipoOpcoes(catId,item) : {pao:false,refri:false};
-  if(opcoes.pao || opcoes.refri){
-    opcaoPendente={item, opcoes};
-    document.getElementById("optionsTitle").textContent=item.nome;
-    document.getElementById("paoBox").style.display=opcoes.pao ? "block" : "none";
-    document.getElementById("refriBox").style.display=opcoes.refri ? "block" : "none";
-    document.getElementById("optionsModal").classList.add("show");
-    return;
-  }
-  inserirNoCarrinho(item, "");
-}
-function inserirNoCarrinho(item, detalhes=""){
-  cart.push({nome:item.nome,preco:Number(item.preco||0),descricao:item.descricao||"",foto:item.foto||"",detalhes:detalhes||""});
-  updateCart();
-  document.getElementById("cartBox").classList.add("open");
-}
-function hideOptionsModal(){opcaoPendente=null;document.getElementById("optionsModal").classList.remove("show")}
-function confirmOptionsChoice(){
-  if(!opcaoPendente) return;
-  const escolha={};
-  if(opcaoPendente.opcoes.pao) escolha.pao=document.getElementById("paoSelect").value;
-  if(opcaoPendente.opcoes.refri) escolha.refri=document.getElementById("refriSelect").value;
-  inserirNoCarrinho(opcaoPendente.item, montarDetalhes(escolha));
-  hideOptionsModal();
-  closeItemModal();
-}
-
-function codigoCupom(c){return String(c||"").trim().toUpperCase().replace(/\s/g,"")}
-function telefoneLimpo(t){return String(t||"").replace(/\D/g,"")}
-function subtotalCarrinho(){return cart.reduce((s,i)=>s+Number(i.preco||0),0)}
-function descontoCupom(cupom, subtotal){
-  if(!cupom) return 0;
-  let valor=Number(cupom.valor||0), d=0;
-  if(String(cupom.tipo||'valor')==='percentual') d=subtotal*(valor/100); else d=valor;
-  if(d<0)d=0; if(d>subtotal)d=subtotal; return Math.round(d*100)/100;
-}
-function validarCupomDados(cupom, subtotal){
-  if(!cupom) return [false,'Cupom não encontrado.'];
-  if(cupom.ativo===false) return [false,'Cupom inativo.'];
-  const max=Number(cupom.usos_maximos||0), usados=Number(cupom.usos_usados||0);
-  if(max>0 && usados>=max) return [false,'Cupom sem usos disponíveis.'];
-  const minimo=Number(cupom.valor_minimo||0);
-  if(subtotal<minimo) return [false,`Pedido mínimo: ${moeda(minimo)}.`];
-  if(cupom.expira_em){ const exp=new Date(cupom.expira_em); if(!isNaN(exp.getTime()) && new Date()>exp) return [false,'Cupom expirado.']; }
-  return [true,'Cupom válido.'];
-}
-async function aplicarCupom(){
-  const codigo=codigoCupom(document.getElementById('cupomInput').value);
-  const msg=document.getElementById('cupomMsg');
-  if(!codigo){msg.style.color='#dc2626';msg.textContent='Digite um cupom.';return;}
-  const subtotal=subtotalCarrinho();
-  if(subtotal<=0){msg.style.color='#dc2626';msg.textContent='Adicione itens antes de aplicar cupom.';return;}
-  const snap=await database.ref('cupons/'+codigo).once('value');
-  const cupom=snap.val(); if(cupom) cupom.codigo=codigo;
-  const [ok,erro]=validarCupomDados(cupom, subtotal);
-  if(!ok){cupomAplicado=null;msg.style.color='#dc2626';msg.textContent=erro;updateCart();return;}
-  cupomAplicado=cupom;
-  msg.style.color='#16a34a'; msg.textContent=`Cupom ${codigo} aplicado: -${moeda(descontoCupom(cupom, subtotal))}`;
-  updateCart();
-}
-function limparCupom(){cupomAplicado=null;document.getElementById('cupomInput').value='';const msg=document.getElementById('cupomMsg');msg.textContent='';updateCart();}
-async function validarCupomAntesEnvio(subtotal, telefone){
-  if(!cupomAplicado) return [true,''];
-  const codigo=codigoCupom(cupomAplicado.codigo);
-  const tel=telefoneLimpo(telefone);
-  try{
-    const snap=await database.ref('cupons/'+codigo).once('value');
-    const cupom=snap.val();
-    if(cupom) cupom.codigo=codigo;
-    const [ok,msg]=validarCupomDados(cupom, subtotal);
-    if(!ok) return [false,msg];
-    if(cupom.um_por_telefone!==false){
-      const usoSnap=await database.ref('cupons_usos/'+codigo+'/'+tel).once('value');
-      if(usoSnap.exists()) return [false,'Este telefone já usou este cupom.'];
-    }
-    cupomAplicado=cupom;
-    return [true,''];
-  }catch(e){
-    console.error('Erro ao validar cupom:', e);
-    return [false,'Erro ao validar cupom. Verifique a conexão e tente novamente.'];
-  }
-}
-
-async function registrarUsoCupomWeb(telefone){
-  if(!cupomAplicado) return [true,''];
-  const codigo=codigoCupom(cupomAplicado.codigo);
-  const tel=telefoneLimpo(telefone);
-  const usoRef=database.ref('cupons_usos/'+codigo+'/'+tel);
-  try{
-    let committedOk=false;
-    await database.ref('cupons/'+codigo+'/usos_usados').transaction((atual)=>{
-      atual=Number(atual||0);
-      const max=Number(cupomAplicado.usos_maximos||0);
-      if(max>0 && atual>=max) return;
-      return atual+1;
-    }, (error, committed)=>{ committedOk = (!error && committed); });
-
-    // Fallback: caso a transação não confirme por instabilidade, tenta atualizar de forma simples.
-    if(!committedOk){
-      const snap=await database.ref('cupons/'+codigo).once('value');
-      const cupom=snap.val()||{};
-      const usados=Number(cupom.usos_usados||0);
-      const max=Number(cupom.usos_maximos||0);
-      if(max>0 && usados>=max) return [false,'Cupom sem usos disponíveis.'];
-      await database.ref('cupons/'+codigo).update({usos_usados: usados+1});
-    }
-
-    if(cupomAplicado.um_por_telefone!==false){
-      await usoRef.set({telefone:tel,usado_em:new Date().toISOString(),codigo});
-    }
-    return [true,''];
-  }catch(e){
-    console.error('Erro ao registrar cupom:', e);
-    return [false,'Pedido enviado, mas não foi possível registrar o uso do cupom. Confira o painel/admin.'];
-  }
-}
-function resumoValores(){
-  const subtotal=subtotalCarrinho();
-  const desconto=descontoCupom(cupomAplicado, subtotal);
-  const total=subtotal+taxaFrete-desconto;
-  return {subtotal, desconto, total};
-}
-function atualizarResumoPedido(){
-  const el=document.getElementById('orderSummary');
-  if(!el) return;
-  const {subtotal, desconto, total}=resumoValores();
-  let cupomTxt = cupomAplicado ? `<div class="row"><span>Cupom ${codigoCupom(cupomAplicado.codigo)}</span><b>-${moeda(desconto)}</b></div>` : '';
-  el.innerHTML = `<div class="row"><span>Subtotal</span><b>${moeda(subtotal)}</b></div><div class="row"><span>Frete</span><b>${moeda(taxaFrete)}</b></div>${cupomTxt}<div class="row total-row"><span>Total</span><b>${moeda(total)}</b></div>`;
-}
+async function excluirCupom(codigo){if(!codigo||!confirm('Excluir o cupom '+codigo+'?'))return; await database.ref('cupons/'+codigo).remove(); if(cupomAtual===codigo) limparFormCupom(); await carregarCupons(); mostrarMsgCupom('Cupom excluído.');}
+async function excluirCupomAtual(){const codigo=codigoLimpo(document.getElementById('cupomCodigo').value)||cupomAtual; await excluirCupom(codigo);}
 
 
-function anunciosAtivos(){return Object.values(anuncios||{}).filter(a=>a && a.ativo!==false && a.imagem).sort((a,b)=>(Number(a.ordem||999)-Number(b.ordem||999)));}
-function mostrarAnuncioInicial(){
-  const arr=anunciosAtivos();
-  if(!arr.length) return;
-  const a=arr[0];
-  // aparece ao entrar no cardápio, mas evita ficar abrindo de novo a cada atualização do Firebase na mesma visita
-  const chave='anuncio_visto_'+(a.id||a.titulo||a.imagem);
-  if(sessionStorage.getItem(chave)) return;
-  anuncioAtual=a;
-  const img=document.getElementById('adImage'), title=document.getElementById('adTitle'), sub=document.getElementById('adSub');
-  if(img) img.src=a.imagem||'';
-  if(title) title.textContent=a.titulo||'Promoção Dimensional';
-  if(sub){
-    if(a.acao==='link') sub.textContent='Toque para abrir o link da promoção.';
-    else if(a.acao==='item') sub.textContent='Toque para adicionar este item ao carrinho.';
-    else sub.textContent='Toque para aproveitar a promoção.';
-  }
-  const modal=document.getElementById('adModal');
-  if(modal) modal.classList.add('show');
+function mostrarMsgAnuncio(t){const m=document.getElementById('msgAnuncio');m.textContent=t;m.style.display='block';setTimeout(()=>m.style.display='none',2500)}
+function iniciarListenerAnuncios(){
+  if(listenerAnunciosAtivo || !database) return;
+  listenerAnunciosAtivo=true;
+  database.ref('anuncios').on('value', s=>{ anuncios=s.val()||{}; renderAnuncios(); if(anuncioAtual && anuncios[anuncioAtual]) selecionarAnuncio(anuncioAtual); });
 }
-function fecharAnuncio(){
-  if(anuncioAtual){sessionStorage.setItem('anuncio_visto_'+(anuncioAtual.id||anuncioAtual.titulo||anuncioAtual.imagem),'1');}
-  const modal=document.getElementById('adModal'); if(modal) modal.classList.remove('show');
+async function carregarAnuncios(){iniciarListenerAnuncios(); const s=await database.ref('anuncios').once('value'); anuncios=s.val()||{}; renderAnuncios(); renderSelectItensAnuncio();}
+function renderAnuncios(){
+  const box=document.getElementById('listaAnuncios'); if(!box)return; box.innerHTML='';
+  const arr=Object.values(anuncios||{}).sort((a,b)=>Number(a.ordem||999)-Number(b.ordem||999));
+  if(!arr.length){box.innerHTML='<div class="muted">Nenhum anúncio cadastrado.</div>';return;}
+  arr.forEach(a=>{
+    const acao=a.acao==='link'?'Abrir link':'Adicionar item';
+    box.innerHTML+=`<div class="ad-admin-card ${a.id===anuncioAtual?'active':''}">
+      <div class="spread"><div onclick="selecionarAnuncio('${a.id}')" style="cursor:pointer"><div class="name">${escapeHtml(a.titulo||'Sem título')}</div><div class="muted">Ordem ${Number(a.ordem||0)} • ${a.ativo!==false?'Ativo':'Inativo'} • ${acao}</div></div>${a.imagem?`<img src="${escapeHtml(a.imagem)}" class="photo-prev" onerror="this.style.display='none'">`:''}</div>
+      <div class="toolbar"><button class="small purple" onclick="selecionarAnuncio('${a.id}')">Editar</button><button class="small danger" onclick="excluirAnuncio('${a.id}')">Excluir</button></div>
+    </div>`;
+  });
 }
-function clicarAnuncioAtual(){
-  if(!anuncioAtual) return fecharAnuncio();
-  const a=anuncioAtual;
-  fecharAnuncio();
-  if(a.acao==='link' && a.url){ window.open(a.url, '_blank'); return; }
-  if(a.acao==='item' && a.catId && a.itemId){ addToCartById(a.catId, a.itemId); document.getElementById('cartBox').classList.add('open'); return; }
+function renderSelectItensAnuncio(){
+  const sel=document.getElementById('anuncioItem'); if(!sel)return;
+  const atual=sel.value; sel.innerHTML='';
+  cats().forEach(cat=>{ itens(cat).forEach(item=>{ const opt=document.createElement('option'); opt.value=cat.id+'|'+item.id; opt.textContent=(cat.nome||'Categoria')+' → '+(item.nome||'Item')+' - '+moeda(item.preco||0); sel.appendChild(opt); }); });
+  if(atual) sel.value=atual;
 }
-
-function removeFromCart(i){cart.splice(i,1); updateCart();}
-function toggleCart(){document.getElementById("cartBox").classList.toggle("open")}
-function updateCart(){
-  const box=document.getElementById("cartItems"); box.innerHTML=""; let subtotal=0;
-  cart.forEach((it,i)=>{subtotal+=Number(it.preco||0); const nomeDetalhado=it.detalhes ? `${it.nome}<br><small style="color:#666">${it.detalhes}</small>` : it.nome;
-  box.innerHTML+=`<div class="cart-row"><span>${nomeDetalhado}</span><span>${moeda(it.preco)} <button class="remove" onclick="removeFromCart(${i})">×</button></span></div>`;});
-  const desconto=descontoCupom(cupomAplicado, subtotal);
-  const total=subtotal+taxaFrete-desconto;
-  document.getElementById("total").innerHTML = desconto>0 ? `${moeda(total)} <span class="discount-row">(-${moeda(desconto)})</span>` : moeda(total);
-  document.getElementById("cartCount").textContent=cart.length+" item"+(cart.length!==1?"s":"");
-  atualizarLoja();
-  atualizarResumoPedido();
+function atualizarPreviewAnuncio(){const img=document.getElementById('anuncioPreview'); const url=document.getElementById('anuncioImagem').value.trim(); if(!img)return; if(url){img.src=url; img.style.display='block';}else{img.removeAttribute('src'); img.style.display='none';}}
+function atualizarAcaoAnuncio(){const acao=document.getElementById('anuncioAcao').value; document.getElementById('acaoLinkBox').classList.toggle('hidden', acao!=='link'); document.getElementById('acaoItemBox').classList.toggle('hidden', acao!=='item');}
+function limparFormAnuncio(){
+  anuncioAtual=null;
+  ['anuncioTitulo','anuncioImagem','anuncioUrl'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('anuncioOrdem').value='1'; document.getElementById('anuncioAcao').value='item'; document.getElementById('anuncioAtivo').checked=true;
+  document.getElementById('tituloAnuncio').textContent='Novo / editar anúncio'; atualizarAcaoAnuncio(); atualizarPreviewAnuncio(); renderAnuncios(); renderSelectItensAnuncio();
 }
-function showOrderModal(){if(!lojaAbertaManual)return alert("Loja fechada."); if(!cart.length)return; atualizarResumoPedido(); document.getElementById("orderModal").classList.add("show")}
-function hideOrderModal(){document.getElementById("orderModal").classList.remove("show")}
-function toggleTroco(){document.getElementById("trocoBox").style.display=document.getElementById("pagamento").value==="Dinheiro"?"block":"none"}
-function haversineDistance(a,b){const R=6371,dLat=(b.lat-a.lat)*Math.PI/180,dLon=(b.lon-a.lon)*Math.PI/180;const x=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLon/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
-function tipoRecebimentoAtual(){
-  const el=document.getElementById('tipoRecebimento');
-  return el ? el.value : 'DELIVERY WEB';
+function novoAnuncio(){limparFormAnuncio();document.getElementById('anuncioTitulo').focus();}
+function selecionarAnuncio(id){
+  const a=anuncios[id]; if(!a)return; anuncioAtual=id;
+  document.getElementById('tituloAnuncio').textContent='Editando: '+(a.titulo||id);
+  document.getElementById('anuncioTitulo').value=a.titulo||''; document.getElementById('anuncioImagem').value=a.imagem||''; document.getElementById('anuncioOrdem').value=Number(a.ordem||1);
+  document.getElementById('anuncioAcao').value=a.acao||'item'; document.getElementById('anuncioUrl').value=a.url||''; document.getElementById('anuncioAtivo').checked=a.ativo!==false;
+  renderSelectItensAnuncio(); if(a.catId && a.itemId) document.getElementById('anuncioItem').value=a.catId+'|'+a.itemId;
+  atualizarAcaoAnuncio(); atualizarPreviewAnuncio(); renderAnuncios();
 }
-function atualizarTipoRecebimento(){
-  const tipo=tipoRecebimentoAtual();
-  const deliveryBox=document.getElementById('deliveryBox');
-  const retiradaInfo=document.getElementById('retiradaInfo');
-  const endereco=document.getElementById('endereco');
-  const freteInfo=document.getElementById('freteInfo');
-  if(tipo==='RETIRADA'){
-    taxaFrete=0;
-    clienteLatitude=null;
-    clienteLongitude=null;
-    if(deliveryBox) deliveryBox.style.display='none';
-    if(retiradaInfo) retiradaInfo.style.display='block';
-    if(endereco) endereco.value='RETIRADA NO BALCÃO';
-    if(freteInfo) freteInfo.innerHTML='';
+async function salvarAnuncio(){
+  const titulo=document.getElementById('anuncioTitulo').value.trim();
+  const imagem=document.getElementById('anuncioImagem').value.trim();
+  if(!titulo){alert('Informe o título do anúncio.');return;}
+  if(!imagem){alert('Informe a URL da imagem do anúncio.');return;}
+  const acao=document.getElementById('anuncioAcao').value;
+  let catId='', itemId='', url='';
+  if(acao==='link'){
+    url=document.getElementById('anuncioUrl').value.trim(); if(!url){alert('Informe o link de destino.');return;}
   }else{
-    if(deliveryBox) deliveryBox.style.display='block';
-    if(retiradaInfo) retiradaInfo.style.display='none';
-    if(endereco && endereco.value==='RETIRADA NO BALCÃO') endereco.value='';
+    const valor=document.getElementById('anuncioItem').value||''; [catId,itemId]=valor.split('|'); if(!catId||!itemId){alert('Escolha o item que será adicionado.');return;}
   }
-  updateCart();
+  const id=anuncioAtual || uid('anuncio');
+  const a={id,titulo,imagem,ordem:Number(document.getElementById('anuncioOrdem').value||1),acao,url,catId,itemId,ativo:document.getElementById('anuncioAtivo').checked,atualizado_em:new Date().toISOString()};
+  await database.ref('anuncios/'+id).set(a); anuncioAtual=id; await carregarAnuncios(); selecionarAnuncio(id); mostrarMsgAnuncio('Anúncio salvo com sucesso.');
 }
-function calculateDelivery(){
-  const info=document.getElementById("freteInfo");
-  if(!navigator.geolocation){info.textContent="Geolocalização não suportada.";return}
-  info.textContent="Buscando localização...";
-  navigator.geolocation.getCurrentPosition(pos=>{clienteLatitude=pos.coords.latitude;clienteLongitude=pos.coords.longitude;const d=haversineDistance(hamburgueriaCoords,{lat:clienteLatitude,lon:clienteLongitude});taxaFrete=Math.ceil(d)*2;info.innerHTML=`Distância: <b>${d.toFixed(2)} km</b><br>Frete: <b>${moeda(taxaFrete)}</b>`;updateCart();},()=>{info.textContent="Erro ao obter localização. Verifique o GPS.";})
-}
-async function enviarPedido(){
-  const tipoRecebimento=tipoRecebimentoAtual();
-  let nome=document.getElementById("nome").value.trim(), telefone=telefoneLimpo(document.getElementById("telefone").value), endereco=document.getElementById("endereco").value.trim(), obs=document.getElementById("obs").value.trim(), pagamento=document.getElementById("pagamento").value, troco=document.getElementById("troco").value;
-  if(tipoRecebimento==='RETIRADA'){
-    taxaFrete=0;
-    clienteLatitude=null;
-    clienteLongitude=null;
-    endereco='RETIRADA NO BALCÃO';
-  }
-  if(!nome||!telefone) return alert("Preencha nome e telefone.");
-  if(tipoRecebimento!=='RETIRADA' && (!endereco||!clienteLatitude)) return alert("Preencha endereço e calcule o frete.");
-  if(!database) return alert("Erro de conexão com o Firebase. Atualize a página e tente novamente.");
+async function excluirAnuncio(id){if(!id||!confirm('Excluir este anúncio?'))return; await database.ref('anuncios/'+id).remove(); if(anuncioAtual===id) limparFormAnuncio(); await carregarAnuncios(); mostrarMsgAnuncio('Anúncio excluído.');}
+async function excluirAnuncioAtual(){await excluirAnuncio(anuncioAtual);}
 
-  let subtotal=0,textoItens="",itens=[];
-  cart.forEach(i=>{
-    subtotal+=Number(i.preco||0);
-    const nomeZap=i.detalhes ? `${i.nome} (${i.detalhes})` : i.nome;
-    textoItens+=`▪️ ${nomeZap} (${moeda(i.preco)})\n`;
-    itens.push({nome:i.nome,preco:Number(i.preco||0),detalhes:i.detalhes||""});
+function entrar(){if(document.getElementById("senha").value===SENHA)document.getElementById("lock").style.display="none";else alert("Senha incorreta");}
+document.getElementById("senha").addEventListener("keydown",e=>{if(e.key==="Enter")entrar()});
+function uid(p="id"){return p+"_"+Date.now()+"_"+Math.floor(Math.random()*9999)}
+function cats(){return Object.values(cardapio.categorias||{}).sort((a,b)=>(a.ordem||999)-(b.ordem||999))}
+function itens(cat){return Object.values(cat.itens||{}).sort((a,b)=>(a.ordem||999)-(b.ordem||999))}
+function moeda(n){return "R$ "+Number(n||0).toFixed(2).replace(".",",")}
+async function garantirInicial(){const s=await database.ref("cardapio_web").once("value"); if(!s.exists()) await database.ref("cardapio_web").set(cardapioInicial);}
+async function carregar(){await garantirInicial(); const s=await database.ref("cardapio_web").once("value"); cardapio=s.val()||cardapioInicial; renderCategorias(); if(categoriaAtual && !cardapio.categorias[categoriaAtual]) categoriaAtual=null; renderEditor();}
+function mostrarMsg(t){const m=document.getElementById("msg");m.textContent=t;m.style.display="block";setTimeout(()=>m.style.display="none",2500)}
+function renderCategorias(){
+  const box=document.getElementById("categorias"); box.innerHTML="";
+  cats().forEach((c,idx,arr)=>{
+    box.innerHTML+=`<div class="category-card ${c.id===categoriaAtual?'active':''}">
+      <div class="spread"><div onclick="selecionarCategoria('${c.id}')" style="cursor:pointer"><div class="name">${c.nome||'Sem nome'}</div><div class="muted">${itens(c).length} item(ns) • Ordem ${c.ordem||0} • ${c.ativo!==false?'Ativa':'Oculta'}</div></div></div>
+      <div class="toolbar"><button class="small gray" onclick="moverCategoria('${c.id}',-1)">↑</button><button class="small gray" onclick="moverCategoria('${c.id}',1)">↓</button><button class="small purple" onclick="selecionarCategoria('${c.id}')">Editar</button></div>
+    </div>`;
   });
-
-  const btn=document.querySelector('#orderModal .actions .primary');
-  const textoOriginal=btn ? btn.textContent : '';
-  if(btn){btn.disabled=true; btn.textContent='Enviando...';}
-
-  try{
-    // Antes de enviar, valida se o cupom ainda existe, não expirou e ainda possui usos disponíveis.
-    if(cupomAplicado){
-      const [cupomValido, cupomErro] = await validarCupomAntesEnvio(subtotal, telefone);
-      if(!cupomValido){
-        alert(cupomErro || 'Cupom inválido.');
-        return;
-      }
-    }
-
-    const desconto=descontoCupom(cupomAplicado, subtotal);
-    const total=subtotal+taxaFrete-desconto;
-    const cupomPedido = cupomAplicado ? {
-      codigo: codigoCupom(cupomAplicado.codigo),
-      nome: cupomAplicado.nome || '',
-      tipo: cupomAplicado.tipo || 'valor',
-      valor: Number(cupomAplicado.valor || 0),
-      desconto: desconto
-    } : null;
-
-    const tipoPedidoSistema = tipoRecebimento === 'RETIRADA' ? 'RETIRADA WEB' : 'DELIVERY WEB';
-
-    const pedido={
-      nome, telefone, endereco, obs, pagamento, troco:troco||'', tipo:tipoPedidoSistema, retirada: tipoRecebimento==='RETIRADA', itens,
-      acrescimos:taxaFrete,
-      subtotal,
-      desconto,
-      desconto_cupom: desconto,
-      total,
-      valor_cobrado: total,
-      cupom: cupomPedido,
-      cupom_codigo: cupomPedido ? cupomPedido.codigo : '',
-      timestamp:Date.now()/1000,
-      status:'novo'
-    };
-
-    // Primeiro envia o pedido para /pedidos_novos para garantir que chegue ao sistema Python.
-    await database.ref('pedidos_novos').push(pedido);
-
-    // Depois registra o uso do cupom no mesmo momento da confirmação do pedido.
-    if(cupomAplicado){
-      const [usoOk, usoErro] = await registrarUsoCupomWeb(telefone);
-      if(!usoOk){
-        console.warn(usoErro);
-        alert(usoErro || 'Pedido enviado, mas houve falha ao contabilizar o cupom. Confira o painel.');
-      }
-    }
-
-    let texto=`*-- NOVO PEDIDO | DIMENSÕES BURGUER --* 🍔\n\n*Cliente:* ${nome}\n*Telefone:* ${telefone}\n\n*ITENS:*\n${textoItens}\n*ENDEREÇO:*\n${endereco}\n\n`;
-    texto+=`*📍 GPS:*\nhttps://www.google.com/maps?q=${clienteLatitude},${clienteLongitude}\n\n`;
-    if(obs) texto+=`*OBS:*\n${obs}\n\n`;
-    texto+=`*RESUMO FINANCEIRO:*\nSubtotal: ${moeda(subtotal)}\nFrete: ${moeda(taxaFrete)}\n`;
-    if(cupomPedido) texto+=`Cupom: ${cupomPedido.codigo}\nDesconto do cupom: -${moeda(desconto)}\n`;
-    texto+=`*Total: ${moeda(total)}*\nPagamento: ${pagamento}`;
-    if(pagamento==='Dinheiro'&&troco) texto+=`\nTroco para: R$ ${troco}`;
-    window.open(`https://wa.me/${numeroHamburgueria}?text=${encodeURIComponent(texto)}`,'_blank');
-    cart=[]; taxaFrete=0; limparCupom(); updateCart(); hideOrderModal();
-    alert('Pedido enviado com sucesso!');
-  }catch(e){
-    console.error('Erro ao enviar pedido:', e);
-    alert('Não foi possível enviar o pedido para o sistema. Verifique a internet e tente novamente.');
-  }finally{
-    if(btn){btn.disabled=false; btn.textContent=textoOriginal || 'Enviar pedido';}
-  }
 }
-
-toggleTroco(); atualizarTipoRecebimento(); iniciar();
+function selecionarCategoria(id){categoriaAtual=id;renderCategorias();renderEditor();}
+function renderEditor(){
+  const panel=document.getElementById("editorCategoria"), titulo=document.getElementById("tituloEdicao");
+  if(!categoriaAtual||!cardapio.categorias[categoriaAtual]){panel.classList.add("hidden");titulo.textContent="Selecione uma categoria";return}
+  const c=cardapio.categorias[categoriaAtual]; panel.classList.remove("hidden"); titulo.textContent="Editando: "+(c.nome||"Sem nome");
+  document.getElementById("catNome").value=c.nome||""; document.getElementById("catAtivo").checked=c.ativo!==false;
+  const box=document.getElementById("itens"); box.innerHTML="";
+  itens(c).forEach(i=>{
+    const foto=i.foto?`<img src="${i.foto}" class="photo-prev" onerror="this.style.display='none'">`:`<div class="photo-prev" style="display:flex;align-items:center;justify-content:center">🍔</div>`;
+    box.innerHTML+=`<div class="item-card">
+      <div class="spread"><div><div class="name">${i.nome||'Sem nome'}</div><div class="muted">${moeda(i.preco)} • Ordem ${i.ordem||0} • ${i.ativo!==false?'Ativo':'Oculto'}</div></div>${foto}</div>
+      <label>Nome</label><input value="${escapeHtml(i.nome||'')}" oninput="editarItem('${i.id}','nome',this.value)">
+      <div class="form-grid"><div><label>Preço</label><input type="number" step="0.01" value="${Number(i.preco||0)}" oninput="editarItem('${i.id}','preco',this.value)"></div><div><label>Ativo</label><select onchange="editarItem('${i.id}','ativo',this.value==='true')"><option value="true" ${i.ativo!==false?'selected':''}>Sim</option><option value="false" ${i.ativo===false?'selected':''}>Não</option></select></div></div>
+      <label>Descrição</label><textarea oninput="editarItem('${i.id}','descricao',this.value)">${escapeHtml(i.descricao||'')}</textarea>
+      <label>Link da foto</label><input value="${escapeHtml(i.foto||'')}" placeholder="https://..." oninput="editarItem('${i.id}','foto',this.value)">
+      <div class="toolbar"><button class="small gray" onclick="moverItem('${i.id}',-1)">↑</button><button class="small gray" onclick="moverItem('${i.id}',1)">↓</button><button class="small danger" onclick="excluirItem('${i.id}')">Excluir item</button></div>
+    </div>`;
+  });
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function atualizarCategoriaAtual(){const c=cardapio.categorias[categoriaAtual]; if(!c)return; c.nome=document.getElementById("catNome").value; c.ativo=document.getElementById("catAtivo").checked; renderCategorias(); document.getElementById("tituloEdicao").textContent="Editando: "+c.nome;}
+function novaCategoria(){const id=uid("cat"); const ordem=cats().length+1; cardapio.categorias[id]={id,nome:"Nova categoria",ordem,ativo:true,itens:{}}; selecionarCategoria(id);}
+function excluirCategoriaAtual(){if(!categoriaAtual)return;if(confirm("Excluir esta categoria e todos os itens?")){delete cardapio.categorias[categoriaAtual];categoriaAtual=null;renderCategorias();renderEditor();}}
+function moverCategoria(id,dir){const arr=cats(),idx=arr.findIndex(c=>c.id===id),other=arr[idx+dir]; if(!other)return; const a=arr[idx].ordem,b=other.ordem; arr[idx].ordem=b; other.ordem=a; renderCategorias();}
+function novoItem(){const c=cardapio.categorias[categoriaAtual]; if(!c)return; if(!c.itens)c.itens={}; const id=uid("item"); c.itens[id]={id,nome:"Novo item",preco:0,descricao:"",foto:"",ordem:itens(c).length+1,ativo:true}; renderEditor();}
+function editarItem(id,campo,valor){const c=cardapio.categorias[categoriaAtual]; if(!c||!c.itens[id])return; if(campo==="preco") valor=Number(String(valor).replace(",","."))||0; c.itens[id][campo]=valor;}
+function excluirItem(id){const c=cardapio.categorias[categoriaAtual]; if(c&&confirm("Excluir este item?")){delete c.itens[id]; renderEditor();}}
+function moverItem(id,dir){const c=cardapio.categorias[categoriaAtual]; const arr=itens(c),idx=arr.findIndex(i=>i.id===id),other=arr[idx+dir]; if(!other)return; const a=arr[idx].ordem,b=other.ordem; arr[idx].ordem=b; other.ordem=a; renderEditor();}
+async function salvarTudo(){await database.ref("cardapio_web").set(cardapio); mostrarMsg("Cardápio salvo. O site atualiza na hora e o Python sincroniza em até 1 minuto.");}
+iniciarListenerCupons();
+iniciarListenerAnuncios();
+carregar();
 </script>
 </body>
 </html>
