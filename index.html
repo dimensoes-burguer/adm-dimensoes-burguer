@@ -15,6 +15,9 @@
 .main{max-width:1180px;margin:18px auto;padding:0 12px;display:grid;grid-template-columns:340px 1fr;gap:16px}.panel{background:white;border-radius:18px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.06);border:1px solid #eee}.panel h2{margin:0 0 12px;font-size:18px}
 .category-card,.item-card{border:1px solid var(--line);border-radius:14px;padding:12px;margin:8px 0;background:#fff}.category-card.active{border-color:var(--purple);box-shadow:0 0 0 2px rgba(107,33,168,.12)}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.spread{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.muted{color:#6b7280;font-size:13px}.name{font-weight:900}input,textarea,select{width:100%;padding:11px;border:1px solid #ddd;border-radius:12px;font-size:14px}label{display:block;font-weight:800;margin:10px 0 5px}textarea{min-height:82px}.form-grid{display:grid;grid-template-columns:1fr 140px;gap:10px}.photo-prev{width:76px;height:62px;object-fit:cover;border-radius:12px;background:#eee}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.hidden{display:none}.ok{background:#dcfce7;color:#166534;padding:10px;border-radius:12px;margin:10px 0;display:none}.warn{background:#fef3c7;color:#92400e;padding:10px;border-radius:12px;margin:10px 0}
 .tabs{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}.tabbtn{background:#374151;color:white}.tabbtn.active{background:var(--green)}.coupon-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.coupon-card,.ad-admin-card{border:1px solid var(--line);border-radius:14px;padding:12px;margin:8px 0;background:#fff}.coupon-card.active,.ad-admin-card.active{border-color:var(--green);box-shadow:0 0 0 2px rgba(0,200,83,.12)}.stats{display:flex;gap:8px;flex-wrap:wrap}.stat{background:#f3f4f6;border-radius:10px;padding:7px 9px;font-size:12px;font-weight:800}.ad-preview{width:100%;max-width:260px;aspect-ratio:4/5;object-fit:cover;border-radius:16px;background:#111827;border:1px solid #e5e7eb}.hint-img{background:#f8fafc;border:1px dashed #94a3b8;border-radius:14px;padding:12px;color:#475569;font-size:13px;line-height:1.45}
+
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}.metric{background:#111827;color:white;border-radius:18px;padding:15px;border:1px solid #263244}.metric .num{font-size:28px;font-weight:900;margin-top:5px}.metric .lbl{font-size:12px;color:#d1d5db}.metric.green{background:#064e3b}.metric.purple{background:#3b0764}.metric.red{background:#7f1d1d}.metric.blue{background:#1e3a8a}.analytics-list{display:grid;gap:8px}.bar-row{display:grid;grid-template-columns:150px 1fr 70px;gap:8px;align-items:center;font-size:13px}.bar{height:12px;background:#e5e7eb;border-radius:999px;overflow:hidden}.bar span{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#7e22ce);border-radius:999px}.online-dot{display:inline-block;width:10px;height:10px;background:#22c55e;border-radius:999px;margin-right:6px;box-shadow:0 0 10px #22c55e}.wide-main{max-width:1180px;margin:18px auto;padding:0 12px;display:block}.analytics-panels{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:850px){.metric-grid{grid-template-columns:repeat(2,1fr)}.analytics-panels{grid-template-columns:1fr}.bar-row{grid-template-columns:110px 1fr 56px}}
+
 @media(max-width:850px){.main{grid-template-columns:1fr}}
 </style>
 </head>
@@ -25,7 +28,7 @@
   <button class="primary" style="width:100%" onclick="entrar()">Entrar</button>
   <p class="muted">Senha inicial: GS1973</p>
 </div></div>
-<header class="top"><div class="top-inner"><div><h1>🌀 Painel Administrativo</h1><p>Controle cardápio, fotos, ordem dos itens, cupons e anúncios.</p><div class="tabs"><button id="tabCardapio" class="tabbtn active" onclick="mostrarAba('cardapio')">Cardápio</button><button id="tabCupons" class="tabbtn" onclick="mostrarAba('cupons')">Cupons</button><button id="tabAnuncios" class="tabbtn" onclick="mostrarAba('anuncios')">Anúncios</button></div></div><button id="btnSalvarTopo" class="primary" onclick="salvarTudo()">Salvar cardápio</button></div></header>
+<header class="top"><div class="top-inner"><div><h1>🌀 Painel Administrativo</h1><p>Controle cardápio, fotos, ordem dos itens, cupons, anúncios e estatísticas.</p><div class="tabs"><button id="tabCardapio" class="tabbtn active" onclick="mostrarAba('cardapio')">Cardápio</button><button id="tabCupons" class="tabbtn" onclick="mostrarAba('cupons')">Cupons</button><button id="tabAnuncios" class="tabbtn" onclick="mostrarAba('anuncios')">Anúncios</button><button id="tabAnalytics" class="tabbtn" onclick="mostrarAba('analytics')">Estatísticas</button></div></div><button id="btnSalvarTopo" class="primary" onclick="salvarTudo()">Salvar cardápio</button></div></header>
 <main id="mainCardapio" class="main">
   <section class="panel">
     <h2>Categorias</h2>
@@ -102,6 +105,43 @@
   </section>
 </main>
 
+
+<main id="mainAnalytics" class="wide-main hidden">
+  <section class="panel">
+    <div class="spread">
+      <div>
+        <h2>📊 Painel de Estatísticas</h2>
+        <p class="muted">Acompanhe acessos, carrinhos, pedidos, clientes online, cliques em anúncios e uso de cupons do cardápio web.</p>
+      </div>
+      <div class="row" style="min-width:280px">
+        <input id="analyticsData" type="date" style="max-width:170px">
+        <button class="primary" onclick="carregarAnalytics()">Atualizar</button>
+      </div>
+    </div>
+    <div id="analyticsResumo" class="metric-grid"></div>
+  </section>
+  <div class="analytics-panels" style="margin-top:16px">
+    <section class="panel">
+      <h2><span class="online-dot"></span>Online agora</h2>
+      <p class="muted">Conta clientes com atividade nos últimos 60 segundos.</p>
+      <div id="analyticsOnline" class="analytics-list"></div>
+    </section>
+    <section class="panel">
+      <h2>Funil do cardápio</h2>
+      <div id="analyticsFunil" class="analytics-list"></div>
+    </section>
+    <section class="panel">
+      <h2>Últimos 7 dias</h2>
+      <div id="analyticsSeteDias" class="analytics-list"></div>
+    </section>
+    <section class="panel">
+      <h2>Eventos acompanhados</h2>
+      <div class="warn">Os dados começam a contar a partir da versão nova do cardápio web. Acessos anteriores não aparecem aqui.</div>
+      <div id="analyticsDetalhes" class="analytics-list"></div>
+    </section>
+  </div>
+</main>
+
 <script>
 
 const firebaseConfig = {
@@ -170,13 +210,16 @@ function mostrarAba(aba){
   document.getElementById('mainCardapio').classList.toggle('hidden', aba!=='cardapio');
   document.getElementById('mainCupons').classList.toggle('hidden', aba!=='cupons');
   document.getElementById('mainAnuncios').classList.toggle('hidden', aba!=='anuncios');
+  document.getElementById('mainAnalytics').classList.toggle('hidden', aba!=='analytics');
   document.getElementById('tabCardapio').classList.toggle('active', aba==='cardapio');
   document.getElementById('tabCupons').classList.toggle('active', aba==='cupons');
   document.getElementById('tabAnuncios').classList.toggle('active', aba==='anuncios');
-  document.getElementById('btnSalvarTopo').textContent = aba==='cardapio' ? 'Salvar cardápio' : (aba==='cupons' ? 'Salvar cupom' : 'Salvar anúncio');
-  document.getElementById('btnSalvarTopo').onclick = aba==='cardapio' ? salvarTudo : (aba==='cupons' ? salvarCupom : salvarAnuncio);
+  document.getElementById('tabAnalytics').classList.toggle('active', aba==='analytics');
+  document.getElementById('btnSalvarTopo').textContent = aba==='cardapio' ? 'Salvar cardápio' : (aba==='cupons' ? 'Salvar cupom' : (aba==='anuncios' ? 'Salvar anúncio' : 'Atualizar painel'));
+  document.getElementById('btnSalvarTopo').onclick = aba==='cardapio' ? salvarTudo : (aba==='cupons' ? salvarCupom : (aba==='anuncios' ? salvarAnuncio : carregarAnalytics));
   if(aba==='cupons') carregarCupons();
   if(aba==='anuncios'){ carregarAnuncios(); renderSelectItensAnuncio(); }
+  if(aba==='analytics') carregarAnalytics();
 }
 function codigoLimpo(c){return String(c||'').trim().toUpperCase().replace(/\s/g,'')}
 function mostrarMsgCupom(t){const m=document.getElementById('msgCupom');m.textContent=t;m.style.display='block';setTimeout(()=>m.style.display='none',2500)}
@@ -297,6 +340,66 @@ async function excluirAnuncioAtual(){await excluirAnuncio(anuncioAtual);}
 function entrar(){if(document.getElementById("senha").value===SENHA)document.getElementById("lock").style.display="none";else alert("Senha incorreta");}
 document.getElementById("senha").addEventListener("keydown",e=>{if(e.key==="Enter")entrar()});
 function uid(p="id"){return p+"_"+Date.now()+"_"+Math.floor(Math.random()*9999)}
+
+// --- PAINEL DE ESTATÍSTICAS / ANALYTICS ---
+function analyticsHojeAdmin(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function analyticsNum(v){return Number(v||0)}
+function analyticsPct(a,b){return b>0?((a/b)*100).toFixed(1).replace('.',',')+'%':'0%'}
+function analyticsMetric(label, value, cls='') {return `<div class="metric ${cls}"><div class="lbl">${label}</div><div class="num">${value}</div></div>`;}
+function analyticsBar(label, value, max){const pct=max>0?Math.max(4,Math.round((value/max)*100)):0;return `<div class="bar-row"><b>${label}</b><div class="bar"><span style="width:${pct}%"></span></div><b>${value}</b></div>`;}
+async function carregarAnalytics(){
+  if(!database) return;
+  const input=document.getElementById('analyticsData');
+  if(input && !input.value) input.value=analyticsHojeAdmin();
+  const dia=(input&&input.value)||analyticsHojeAdmin();
+  const snap=await database.ref('analytics/daily/'+dia).once('value');
+  const d=snap.val()||{};
+  const onlineSnap=await database.ref('analytics/online').once('value');
+  const agora=Date.now();
+  const online=Object.values(onlineSnap.val()||{}).filter(o=>agora-analyticsNum(o.ultimo_ping)<60000);
+  const visitas=analyticsNum(d.visitas), carrinhos=analyticsNum(d.carrinhos_iniciados), checkouts=analyticsNum(d.checkouts_abertos), pedidos=analyticsNum(d.pedidos_finalizados);
+  document.getElementById('analyticsResumo').innerHTML=
+    analyticsMetric('Visitantes hoje', visitas, 'blue')+
+    analyticsMetric('Online agora', online.length, 'green')+
+    analyticsMetric('Carrinhos iniciados', carrinhos, 'purple')+
+    analyticsMetric('Pedidos confirmados', pedidos, 'green')+
+    analyticsMetric('Conversão visita → pedido', analyticsPct(pedidos,visitas), '')+
+    analyticsMetric('Carrinho → pedido', analyticsPct(pedidos,carrinhos), '')+
+    analyticsMetric('Cliques em anúncios', analyticsNum(d.cliques_anuncios), '')+
+    analyticsMetric('Cupons usados', analyticsNum(d.cupons_usados), 'red');
+  renderAnalyticsOnline(online);
+  renderAnalyticsFunil(d);
+  await renderAnalyticsSeteDias();
+  renderAnalyticsDetalhes(d);
+}
+function renderAnalyticsOnline(online){
+  const box=document.getElementById('analyticsOnline');
+  if(!online.length){box.innerHTML='<div class="muted">Nenhum cliente online agora.</div>';return;}
+  box.innerHTML=online.map((o,i)=>`<div class="coupon-card"><b>Cliente ${i+1}</b><div class="muted">Sessão: ${escapeHtml(String(o.sessao||'').slice(0,22))}...</div><div class="muted">Última atividade: ${Math.round((Date.now()-analyticsNum(o.ultimo_ping))/1000)}s atrás</div></div>`).join('');
+}
+function renderAnalyticsFunil(d){
+  const valores=[['Visitas',analyticsNum(d.visitas)],['Carrinhos',analyticsNum(d.carrinhos_iniciados)],['Itens adicionados',analyticsNum(d.itens_adicionados)],['Finalização aberta',analyticsNum(d.checkouts_abertos)],['Pedidos',analyticsNum(d.pedidos_finalizados)]];
+  const max=Math.max(1,...valores.map(v=>v[1]));
+  document.getElementById('analyticsFunil').innerHTML=valores.map(v=>analyticsBar(v[0],v[1],max)).join('');
+}
+async function renderAnalyticsSeteDias(){
+  const box=document.getElementById('analyticsSeteDias');
+  const dias=[];
+  for(let i=6;i>=0;i--){const dt=new Date();dt.setDate(dt.getDate()-i);dias.push(`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`);}
+  const snaps=await Promise.all(dias.map(d=>database.ref('analytics/daily/'+d).once('value')));
+  const linhas=snaps.map((s,idx)=>{const v=s.val()||{};return {dia:dias[idx], visitas:analyticsNum(v.visitas), pedidos:analyticsNum(v.pedidos_finalizados), carrinhos:analyticsNum(v.carrinhos_iniciados)}});
+  const max=Math.max(1,...linhas.map(l=>l.visitas));
+  box.innerHTML=linhas.map(l=>`<div class="coupon-card"><div class="spread"><b>${l.dia.split('-').reverse().join('/')}</b><span class="muted">Pedidos: ${l.pedidos} • Carrinhos: ${l.carrinhos}</span></div>${analyticsBar('Visitas',l.visitas,max)}</div>`).join('');
+}
+function renderAnalyticsDetalhes(d){
+  const itens=[['Anúncios exibidos',d.anuncios_exibidos],['Cliques em anúncios',d.cliques_anuncios],['Cupons usados',d.cupons_usados],['Itens adicionados ao carrinho',d.itens_adicionados],['Checkouts abertos',d.checkouts_abertos]];
+  document.getElementById('analyticsDetalhes').innerHTML=itens.map(i=>`<div class="stat" style="display:block;margin-bottom:8px">${i[0]}: ${analyticsNum(i[1])}</div>`).join('');
+}
+if(database){
+  database.ref('analytics/online').on('value',()=>{if(!document.getElementById('mainAnalytics').classList.contains('hidden')) carregarAnalytics();});
+  setInterval(()=>{if(!document.getElementById('mainAnalytics').classList.contains('hidden')) carregarAnalytics();},30000);
+}
+
 function cats(){return Object.values(cardapio.categorias||{}).sort((a,b)=>(a.ordem||999)-(b.ordem||999))}
 function itens(cat){return Object.values(cat.itens||{}).sort((a,b)=>(a.ordem||999)-(b.ordem||999))}
 function moeda(n){return "R$ "+Number(n||0).toFixed(2).replace(".",",")}
