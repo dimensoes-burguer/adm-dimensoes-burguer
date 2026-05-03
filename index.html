@@ -28,7 +28,7 @@
   <button class="primary" style="width:100%" onclick="entrar()">Entrar</button>
   <p class="muted">Senha inicial: GS1973</p>
 </div></div>
-<header class="top"><div class="top-inner"><div><h1>🌀 Painel Administrativo</h1><p>Controle cardápio, fotos, ordem dos itens, cupons, anúncios e estatísticas.</p><div class="tabs"><button id="tabCardapio" class="tabbtn active" onclick="mostrarAba('cardapio')">Cardápio</button><button id="tabCupons" class="tabbtn" onclick="mostrarAba('cupons')">Cupons</button><button id="tabAnuncios" class="tabbtn" onclick="mostrarAba('anuncios')">Anúncios</button><button id="tabAnalytics" class="tabbtn" onclick="mostrarAba('analytics')">Estatísticas</button></div></div><button id="btnSalvarTopo" class="primary" onclick="salvarTudo()">Salvar cardápio</button></div></header>
+<header class="top"><div class="top-inner"><div><h1>🌀 Painel Administrativo</h1><p>Controle cardápio, fotos, ordem dos itens, cupons, anúncios e estatísticas.</p><div class="tabs"><button id="tabCardapio" class="tabbtn active" onclick="mostrarAba('cardapio')">Cardápio</button><button id="tabCupons" class="tabbtn" onclick="mostrarAba('cupons')">Cupons</button><button id="tabAnuncios" class="tabbtn" onclick="mostrarAba('anuncios')">Anúncios</button><button id="tabOpcoes" class="tabbtn" onclick="mostrarAba('opcoes')">Opções</button><button id="tabAnalytics" class="tabbtn" onclick="mostrarAba('analytics')">Estatísticas</button></div></div><button id="btnSalvarTopo" class="primary" onclick="salvarTudo()">Salvar cardápio</button></div></header>
 <main id="mainCardapio" class="main">
   <section class="panel">
     <h2>Categorias</h2>
@@ -105,6 +105,33 @@
   </section>
 </main>
 
+
+
+<main id="mainOpcoes" class="main hidden">
+  <section class="panel">
+    <h2>Grupos de opções</h2>
+    <div class="toolbar"><button class="primary" onclick="novoGrupoOpcao()">+ Grupo</button><button class="gray" onclick="carregarOpcoesPedido()">Recarregar</button></div>
+    <div id="msgOpcoes" class="ok"></div>
+    <div class="warn">Use esta aba para controlar opções como <b>pães</b>, <b>bebidas dos combos</b> e qualquer outra escolha. Marque quais itens do cardápio terão cada grupo.</div>
+    <div class="toolbar"><button class="gray" onclick="criarGruposPadraoOpcoes()">Criar grupos padrão pão/refri</button></div><div id="listaGruposOpcoes"></div>
+  </section>
+  <section class="panel">
+    <h2 id="tituloGrupoOpcao">Novo / editar grupo</h2>
+    <label>Nome do grupo</label><input id="grupoOpcaoNome" placeholder="Ex: Escolha o pão">
+    <div class="coupon-grid">
+      <div><label>Ordem</label><input id="grupoOpcaoOrdem" type="number" step="1" value="1"></div>
+      <div><label>Obrigatório?</label><select id="grupoOpcaoObrigatorio"><option value="true">Sim</option><option value="false">Não</option></select></div>
+    </div>
+    <label><input type="checkbox" id="grupoOpcaoAtivo" style="width:auto" checked> Grupo ativo</label>
+    <h3>Opções desse grupo</h3>
+    <div id="opcoesDoGrupo"></div>
+    <div class="toolbar"><button class="gray" onclick="novaOpcaoDentroGrupo()">+ Opção</button></div>
+    <h3>Itens que usam este grupo</h3>
+    <div class="warn">Marque os produtos que devem mostrar esta escolha no cardápio web.</div>
+    <div id="itensPermitidosGrupo" style="max-height:360px;overflow:auto;border:1px solid #e5e7eb;border-radius:14px;padding:10px"></div>
+    <div class="toolbar"><button class="primary" onclick="salvarGrupoOpcao()">Salvar grupo</button><button class="danger" onclick="excluirGrupoOpcaoAtual()">Excluir grupo</button><button class="gray" onclick="limparGrupoOpcao()">Limpar</button></div>
+  </section>
+</main>
 
 <main id="mainAnalytics" class="wide-main hidden">
   <section class="panel">
@@ -211,15 +238,18 @@ function mostrarAba(aba){
   document.getElementById('mainCardapio').classList.toggle('hidden', aba!=='cardapio');
   document.getElementById('mainCupons').classList.toggle('hidden', aba!=='cupons');
   document.getElementById('mainAnuncios').classList.toggle('hidden', aba!=='anuncios');
+  document.getElementById('mainOpcoes').classList.toggle('hidden', aba!=='opcoes');
   document.getElementById('mainAnalytics').classList.toggle('hidden', aba!=='analytics');
   document.getElementById('tabCardapio').classList.toggle('active', aba==='cardapio');
   document.getElementById('tabCupons').classList.toggle('active', aba==='cupons');
   document.getElementById('tabAnuncios').classList.toggle('active', aba==='anuncios');
+  document.getElementById('tabOpcoes').classList.toggle('active', aba==='opcoes');
   document.getElementById('tabAnalytics').classList.toggle('active', aba==='analytics');
-  document.getElementById('btnSalvarTopo').textContent = aba==='cardapio' ? 'Salvar cardápio' : (aba==='cupons' ? 'Salvar cupom' : (aba==='anuncios' ? 'Salvar anúncio' : 'Atualizar painel'));
-  document.getElementById('btnSalvarTopo').onclick = aba==='cardapio' ? salvarTudo : (aba==='cupons' ? salvarCupom : (aba==='anuncios' ? salvarAnuncio : carregarAnalytics));
+  document.getElementById('btnSalvarTopo').textContent = aba==='cardapio' ? 'Salvar cardápio' : (aba==='cupons' ? 'Salvar cupom' : (aba==='anuncios' ? 'Salvar anúncio' : (aba==='opcoes' ? 'Salvar grupo' : 'Atualizar painel')));
+  document.getElementById('btnSalvarTopo').onclick = aba==='cardapio' ? salvarTudo : (aba==='cupons' ? salvarCupom : (aba==='anuncios' ? salvarAnuncio : (aba==='opcoes' ? salvarGrupoOpcao : carregarAnalytics)));
   if(aba==='cupons') carregarCupons();
   if(aba==='anuncios'){ carregarAnuncios(); renderSelectItensAnuncio(); }
+  if(aba==='opcoes') carregarOpcoesPedido();
   if(aba==='analytics') carregarAnalytics();
 }
 function codigoLimpo(c){return String(c||'').trim().toUpperCase().replace(/\s/g,'')}
@@ -447,6 +477,7 @@ function renderEditor(){
       <div class="form-grid"><div><label>Preço</label><input type="number" step="0.01" value="${Number(i.preco||0)}" oninput="editarItem('${i.id}','preco',this.value)"></div><div><label>Ativo</label><select onchange="editarItem('${i.id}','ativo',this.value==='true')"><option value="true" ${i.ativo!==false?'selected':''}>Sim</option><option value="false" ${i.ativo===false?'selected':''}>Não</option></select></div></div>
       <label>Descrição</label><textarea oninput="editarItem('${i.id}','descricao',this.value)">${escapeHtml(i.descricao||'')}</textarea>
       <label>Link da foto</label><input value="${escapeHtml(i.foto||'')}" placeholder="https://..." oninput="editarItem('${i.id}','foto',this.value)">
+      ${renderAdicionaisAdminHtml(i)}
       <div class="toolbar"><button class="small gray" onclick="moverItem('${i.id}',-1)">↑</button><button class="small gray" onclick="moverItem('${i.id}',1)">↓</button><button class="small danger" onclick="excluirItem('${i.id}')">Excluir item</button></div>
     </div>`;
   });
@@ -464,6 +495,93 @@ async function salvarTudo(){await database.ref("cardapio_web").set(cardapio); mo
 iniciarListenerCupons();
 iniciarListenerAnuncios();
 carregar();
+setTimeout(()=>carregarOpcoesPedido().catch(()=>{}),500);
+
+
+// --- OPÇÕES DE COMBOS / PÃES / BEBIDAS / GRUPOS DINÂMICOS ---
+function mostrarMsgOpcoes(t){const m=document.getElementById('msgOpcoes'); if(!m)return; m.textContent=t; m.style.display='block'; setTimeout(()=>m.style.display='none',2500)}
+function safeKey(s){return String(s||'id').replace(/[.#$\[\]\/]/g,'_')}
+function gruposArray(){return Object.values(opcoesPedido||{}).sort((a,b)=>Number(a.ordem||999)-Number(b.ordem||999))}
+function todasOpcoesItensCardapio(){
+  const out=[];
+  cats().forEach(cat=>itens(cat).forEach(item=>out.push({catId:cat.id,catNome:cat.nome,itemId:item.id,itemNome:item.nome,key:item.id})));
+  return out;
+}
+async function carregarOpcoesPedido(){
+  const s=await database.ref('opcoes_pedido').once('value');
+  opcoesPedido=s.val()||{};
+  renderGruposOpcoes();
+  renderGrupoOpcaoEditor();
+}
+function renderGruposOpcoes(){
+  const box=document.getElementById('listaGruposOpcoes'); if(!box)return; box.innerHTML='';
+  const arr=gruposArray();
+  if(!arr.length){box.innerHTML='<p class="muted">Nenhum grupo cadastrado ainda.</p>';return;}
+  arr.forEach(g=>{
+    const qtdOp=Object.keys(g.opcoes||{}).length;
+    const qtdItens=Object.keys(g.itensPermitidos||{}).filter(k=>g.itensPermitidos[k]).length;
+    box.innerHTML+=`<div class="coupon-card ${g.id===grupoOpcaoAtual?'active':''}"><div class="spread"><div><div class="name">${escapeHtml(g.nome||'Grupo')}</div><div class="muted">${qtdOp} opção(ões) • ${qtdItens} item(ns) vinculado(s) • ${g.ativo!==false?'Ativo':'Desativado'}</div></div><button class="small purple" onclick="selecionarGrupoOpcao('${g.id}')">Editar</button></div></div>`;
+  });
+}
+function limparGrupoOpcao(){grupoOpcaoAtual=null; document.getElementById('grupoOpcaoNome').value=''; document.getElementById('grupoOpcaoOrdem').value=gruposArray().length+1; document.getElementById('grupoOpcaoObrigatorio').value='true'; document.getElementById('grupoOpcaoAtivo').checked=true; renderGrupoOpcaoEditor(); renderGruposOpcoes();}
+function novoGrupoOpcao(){limparGrupoOpcao(); document.getElementById('grupoOpcaoNome').focus();}
+function selecionarGrupoOpcao(id){grupoOpcaoAtual=id; const g=opcoesPedido[id]; if(!g)return; document.getElementById('grupoOpcaoNome').value=g.nome||''; document.getElementById('grupoOpcaoOrdem').value=Number(g.ordem||1); document.getElementById('grupoOpcaoObrigatorio').value=String(g.obrigatorio!==false); document.getElementById('grupoOpcaoAtivo').checked=g.ativo!==false; renderGrupoOpcaoEditor(); renderGruposOpcoes();}
+function opcaoLinhaHtml(opId,o){return `<div class="item-card" data-opid="${opId}"><div class="coupon-grid"><div><label>Nome da opção</label><input class="opt-nome" value="${escapeHtml(o.nome||'')}"></div><div><label>Preço extra</label><input class="opt-preco" type="number" step="0.01" value="${Number(o.preco||0)}"></div></div><div class="toolbar"><label style="margin:0"><input class="opt-ativo" type="checkbox" style="width:auto" ${o.ativo!==false?'checked':''}> Ativa</label><button class="small danger" onclick="this.closest('.item-card').remove()">Excluir opção</button></div></div>`}
+function renderGrupoOpcaoEditor(){
+  const titulo=document.getElementById('tituloGrupoOpcao'); if(!titulo)return;
+  const g=grupoOpcaoAtual?opcoesPedido[grupoOpcaoAtual]:null;
+  titulo.textContent=g?('Editando: '+(g.nome||'Grupo')):'Novo / editar grupo';
+  const boxOp=document.getElementById('opcoesDoGrupo'); boxOp.innerHTML='';
+  const ops=g&&g.opcoes?g.opcoes:{};
+  Object.entries(ops).sort((a,b)=>Number(a[1].ordem||999)-Number(b[1].ordem||999)).forEach(([id,o])=>boxOp.insertAdjacentHTML('beforeend',opcaoLinhaHtml(id,o)));
+  const boxItens=document.getElementById('itensPermitidosGrupo'); boxItens.innerHTML='';
+  const permitidos=(g&&g.itensPermitidos)||{};
+  todasOpcoesItensCardapio().forEach(x=>{
+    boxItens.insertAdjacentHTML('beforeend',`<label style="display:block;margin:7px 0;font-weight:600"><input type="checkbox" class="grupo-item-check" value="${x.key}" style="width:auto" ${permitidos[x.key]?'checked':''}> ${escapeHtml(x.catNome)} › <b>${escapeHtml(x.itemNome)}</b></label>`);
+  });
+}
+function novaOpcaoDentroGrupo(){const box=document.getElementById('opcoesDoGrupo'); box.insertAdjacentHTML('beforeend',opcaoLinhaHtml(uid('opcao'),{nome:'Nova opção',preco:0,ativo:true,ordem:box.children.length+1}));}
+async function salvarGrupoOpcao(){
+  const id=grupoOpcaoAtual||uid('grupo');
+  const opcoes={};
+  [...document.querySelectorAll('#opcoesDoGrupo .item-card')].forEach((el,idx)=>{
+    const opId=el.dataset.opid||uid('opcao');
+    const nome=el.querySelector('.opt-nome').value.trim();
+    if(!nome)return;
+    opcoes[opId]={id:opId,nome,preco:Number(el.querySelector('.opt-preco').value||0),ativo:el.querySelector('.opt-ativo').checked,ordem:idx+1};
+  });
+  const itensPermitidos={};
+  [...document.querySelectorAll('.grupo-item-check')].forEach(ch=>{if(ch.checked)itensPermitidos[ch.value]=true;});
+  const grupo={id,nome:document.getElementById('grupoOpcaoNome').value.trim()||'Grupo de opções',ordem:Number(document.getElementById('grupoOpcaoOrdem').value||999),obrigatorio:document.getElementById('grupoOpcaoObrigatorio').value==='true',ativo:document.getElementById('grupoOpcaoAtivo').checked,opcoes,itensPermitidos};
+  await database.ref('opcoes_pedido/'+id).set(grupo);
+  grupoOpcaoAtual=id;
+  await carregarOpcoesPedido();
+  selecionarGrupoOpcao(id);
+  mostrarMsgOpcoes('Grupo salvo com sucesso.');
+}
+async function excluirGrupoOpcaoAtual(){if(!grupoOpcaoAtual)return alert('Selecione um grupo.'); if(!confirm('Excluir este grupo de opções?'))return; await database.ref('opcoes_pedido/'+grupoOpcaoAtual).remove(); grupoOpcaoAtual=null; await carregarOpcoesPedido(); limparGrupoOpcao(); mostrarMsgOpcoes('Grupo excluído.');}
+
+async function criarGruposPadraoOpcoes(){
+  if(!confirm('Criar grupos padrão de Pães e Refrigerantes? Você ainda poderá editar tudo depois.')) return;
+  const existentes=await database.ref('opcoes_pedido').once('value');
+  const atual=existentes.val()||{};
+  const paoId=atual.padroes_paes?'padroes_paes':'padroes_paes';
+  const refriId=atual.padroes_refri_lata?'padroes_refri_lata':'padroes_refri_lata';
+  atual[paoId]={id:paoId,nome:'Escolha o pão',ordem:1,obrigatorio:true,ativo:true,opcoes:{brioche_liso:{id:'brioche_liso',nome:'Brioche liso',preco:0,ativo:true,ordem:1},brioche_premium:{id:'brioche_premium',nome:'Brioche premium',preco:0,ativo:true,ordem:2},pao_australiano:{id:'pao_australiano',nome:'Pão australiano',preco:0,ativo:true,ordem:3}},itensPermitidos:atual[paoId]?.itensPermitidos||{}};
+  atual[refriId]={id:refriId,nome:'Escolha o refrigerante lata',ordem:2,obrigatorio:true,ativo:true,opcoes:{soda:{id:'soda',nome:'Soda Limonada',preco:0,ativo:true,ordem:1},sukita:{id:'sukita',nome:'Sukita Laranja',preco:0,ativo:true,ordem:2},coca:{id:'coca',nome:'Coca-Cola',preco:0,ativo:true,ordem:3},coca_zero:{id:'coca_zero',nome:'Coca-Cola Zero',preco:0,ativo:true,ordem:4},guarana:{id:'guarana',nome:'Guaraná',preco:0,ativo:true,ordem:5}},itensPermitidos:atual[refriId]?.itensPermitidos||{}};
+  await database.ref('opcoes_pedido').set(atual);
+  await carregarOpcoesPedido();
+  mostrarMsgOpcoes('Grupos padrão criados. Agora marque os itens permitidos em cada grupo.');
+}
+
+function renderAdicionaisAdminHtml(i){
+  const ads=i.adicionais||{};
+  const rows=Object.entries(ads).map(([id,a])=>`<div class="row" data-adid="${id}" style="margin:6px 0"><input class="ad-nome" placeholder="Nome do adicional" value="${escapeHtml(a.nome||'')}" style="flex:1;min-width:160px"><input class="ad-preco" type="number" step="0.01" value="${Number(a.preco||0)}" style="width:120px"><label style="margin:0"><input class="ad-ativo" type="checkbox" style="width:auto" ${a.ativo!==false?'checked':''}> Ativo</label><button class="small danger" onclick="this.closest('.row').remove();salvarAdicionaisItem('${i.id}')">Excluir</button></div>`).join('');
+  return `<div style="border-top:1px solid #e5e7eb;margin-top:12px;padding-top:10px"><b>Adicionais deste item</b><div class="muted">Crie adicionais com preço. Eles aparecem como opcionais no cardápio web.</div><div id="ads_${i.id}">${rows}</div><div class="toolbar"><button class="small gray" onclick="novoAdicionalItem('${i.id}')">+ Adicional</button><button class="small primary" onclick="salvarAdicionaisItem('${i.id}')">Salvar adicionais</button></div></div>`;
+}
+function novoAdicionalItem(itemId){const box=document.getElementById('ads_'+itemId); if(!box)return; const id=uid('ad'); box.insertAdjacentHTML('beforeend',`<div class="row" data-adid="${id}" style="margin:6px 0"><input class="ad-nome" placeholder="Nome do adicional" style="flex:1;min-width:160px"><input class="ad-preco" type="number" step="0.01" value="0" style="width:120px"><label style="margin:0"><input class="ad-ativo" type="checkbox" style="width:auto" checked> Ativo</label><button class="small danger" onclick="this.closest('.row').remove();salvarAdicionaisItem('${itemId}')">Excluir</button></div>`);}
+function salvarAdicionaisItem(itemId){const c=cardapio.categorias[categoriaAtual]; if(!c||!c.itens[itemId])return; const ads={}; [...document.querySelectorAll('#ads_'+itemId+' .row')].forEach((el,idx)=>{const id=el.dataset.adid||uid('ad'); const nome=el.querySelector('.ad-nome').value.trim(); if(!nome)return; ads[id]={id,nome,preco:Number(el.querySelector('.ad-preco').value||0),ativo:el.querySelector('.ad-ativo').checked,ordem:idx+1};}); c.itens[itemId].adicionais=ads; mostrarMsg('Adicionais atualizados. Clique em Salvar cardápio para publicar.');}
+
 </script>
 </body>
 </html>
