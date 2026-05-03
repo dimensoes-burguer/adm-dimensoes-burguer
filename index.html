@@ -93,7 +93,7 @@
     <div style="margin:10px 0"><img id="anuncioPreview" class="ad-preview" alt="Prévia do anúncio" onerror="this.style.display='none'"></div>
     <div class="coupon-grid">
       <div><label>Ordem</label><input id="anuncioOrdem" type="number" step="1" value="1"></div>
-      <div><label>Ação ao clicar</label><select id="anuncioAcao" onchange="atualizarAcaoAnuncio()"><option value="item">Adicionar item ao carrinho</option><option value="link">Redirecionar para link</option></select></div>
+      <div><label>Ação ao clicar</label><select id="anuncioAcao" onchange="atualizarAcaoAnuncio()"><option value="item">Adicionar item ao carrinho</option><option value="link">Redirecionar para link</option><option value="nada">Não fazer nada / Só divulgação</option></select></div>
     </div>
     <div id="acaoLinkBox" class="hidden"><label>Link de destino</label><input id="anuncioUrl" placeholder="https://wa.me/... ou https://..."></div>
     <div id="acaoItemBox">
@@ -314,13 +314,20 @@ function iniciarListenerAnuncios(){
 }
 async function carregarAnuncios(){iniciarListenerAnuncios(); const s=await database.ref('anuncios').once('value'); anuncios=s.val()||{}; const aStats=await database.ref('analytics/anuncios').once('value'); analyticsAnuncios=aStats.val()||{}; renderAnuncios(); renderSelectItensAnuncio();}
 function analyticsKeyAdmin(s){return String(s||'sem_id').replace(/[.#$\[\]\/]/g,'_').slice(0,120)}
-function cliquesAnuncio(a){const k=analyticsKeyAdmin(a.id||a.titulo||a.imagem||'sem_id'); return Number((analyticsAnuncios[k]||{}).cliques||0)}
+function cliquesAnuncio(a){
+  const raw=String(a.id||a.titulo||a.imagem||'sem_id');
+  const k=analyticsKeyAdmin(raw);
+  const direto=Number((analyticsAnuncios[raw]||{}).cliques||0);
+  const normalizado=Number((analyticsAnuncios[k]||{}).cliques||0);
+  const noAnuncio=Number(a.cliques||0);
+  return Math.max(direto, normalizado, noAnuncio);
+}
 function renderAnuncios(){
   const box=document.getElementById('listaAnuncios'); if(!box)return; box.innerHTML='';
   const arr=Object.values(anuncios||{}).sort((a,b)=>Number(a.ordem||999)-Number(b.ordem||999));
   if(!arr.length){box.innerHTML='<div class="muted">Nenhum anúncio cadastrado.</div>';return;}
   arr.forEach(a=>{
-    const acao=a.acao==='link'?'Abrir link':'Adicionar item';
+    const acao=a.acao==='link'?'Abrir link':(a.acao==='item'?'Adicionar item':'Só divulgação');
     box.innerHTML+=`<div class="ad-admin-card ${a.id===anuncioAtual?'active':''}">
       <div class="spread"><div onclick="selecionarAnuncio('${a.id}')" style="cursor:pointer"><div class="name">${escapeHtml(a.titulo||'Sem título')}</div><div class="muted">Ordem ${Number(a.ordem||0)} • ${a.ativo!==false?'Ativo':'Inativo'} • ${acao}</div><div class="stats"><span class="stat">Cliques: ${cliquesAnuncio(a)}</span></div></div>${a.imagem?`<img src="${escapeHtml(a.imagem)}" class="photo-prev" onerror="this.style.display='none'">`:''}</div>
       <div class="toolbar"><button class="small purple" onclick="selecionarAnuncio('${a.id}')">Editar</button><button class="small ${a.ativo!==false?'gray':'primary'}" onclick="alternarAnuncio('${a.id}')">${a.ativo!==false?'Desativar':'Ativar'}</button><button class="small danger" onclick="excluirAnuncio('${a.id}')">Excluir</button></div>
@@ -340,8 +347,10 @@ function atualizarAcaoAnuncio(){
   document.getElementById('acaoItemBox').classList.toggle('hidden', acao!=='item');
   const sub=document.getElementById('anuncioSubtitulo');
   const botao=document.getElementById('anuncioTextoBotao');
-  if(sub && !sub.value.trim()) sub.value = acao==='link' ? 'Toque para abrir o link da promoção.' : 'Toque para adicionar este item ao carrinho.';
-  if(botao && !botao.value.trim()) botao.value = 'Aproveitar promoção';
+  if(sub && !sub.value.trim()){
+    sub.value = acao==='link' ? 'Toque para abrir o link da promoção.' : (acao==='item' ? 'Toque para adicionar este item ao carrinho.' : 'Confira esta novidade da Dimensões Burguer.');
+  }
+  if(botao && !botao.value.trim()) botao.value = acao==='nada' ? 'Fechar' : 'Aproveitar promoção';
 }
 function limparFormAnuncio(){
   anuncioAtual=null;
@@ -369,8 +378,10 @@ async function salvarAnuncio(){
   let catId='', itemId='', url='';
   if(acao==='link'){
     url=document.getElementById('anuncioUrl').value.trim(); if(!url){alert('Informe o link de destino.');return;}
-  }else{
+  }else if(acao==='item'){
     const valor=document.getElementById('anuncioItem').value||''; [catId,itemId]=valor.split('|'); if(!catId||!itemId){alert('Escolha o item que será adicionado.');return;}
+  }else{
+    url=''; catId=''; itemId='';
   }
   const id=anuncioAtual || uid('anuncio');
   const a={id,titulo,texto_subtitulo,texto_botao,imagem,ordem:Number(document.getElementById('anuncioOrdem').value||1),acao,url,catId,itemId,ativo:document.getElementById('anuncioAtivo').checked,atualizado_em:new Date().toISOString()};
@@ -400,7 +411,8 @@ async function carregarAnalytics(){
   if(input && !input.value) input.value=analyticsHojeAdmin();
   const dia=(input&&input.value)||analyticsHojeAdmin();
   const snap=await database.ref('analytics/daily/'+dia).once('value');
-  const d=snap.val()||{};
+  const snapAlt=await database.ref('analytics/dias/'+dia).once('value');
+  const d=Object.assign({}, snapAlt.val()||{}, snap.val()||{});
   const onlineSnap=await database.ref('analytics/online').once('value');
   const agora=Date.now();
   const online=Object.values(onlineSnap.val()||{}).filter(o=>agora-analyticsNum(o.ultimo_ping)<60000);
