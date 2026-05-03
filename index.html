@@ -28,7 +28,7 @@
   <button class="primary" style="width:100%" onclick="entrar()">Entrar</button>
   <p class="muted">Senha inicial: GS1973</p>
 </div></div>
-<header class="top"><div class="top-inner"><div><h1>🌀 Painel Administrativo</h1><p>Controle cardápio, fotos, ordem dos itens, cupons, anúncios e estatísticas.</p><div class="tabs"><button id="tabCardapio" class="tabbtn active" onclick="mostrarAba('cardapio')">Cardápio</button><button id="tabCupons" class="tabbtn" onclick="mostrarAba('cupons')">Cupons</button><button id="tabAnuncios" class="tabbtn" onclick="mostrarAba('anuncios')">Anúncios</button><button id="tabOpcoes" class="tabbtn" onclick="mostrarAba('opcoes')">Opções</button><button id="tabAnalytics" class="tabbtn" onclick="mostrarAba('analytics')">Estatísticas</button></div></div><button id="btnSalvarTopo" class="primary" onclick="salvarTudo()">Salvar cardápio</button></div></header>
+<header class="top"><div class="top-inner"><div><h1>🌀 Painel Administrativo</h1><p>Controle cardápio, fotos, ordem dos itens, cupons, anúncios e estatísticas.</p><div class="tabs"><button id="tabCardapio" class="tabbtn active" onclick="mostrarAba('cardapio')">Cardápio</button><button id="tabCupons" class="tabbtn" onclick="mostrarAba('cupons')">Cupons</button><button id="tabAnuncios" class="tabbtn" onclick="mostrarAba('anuncios')">Anúncios</button><button id="tabOpcoes" class="tabbtn" onclick="mostrarAba('opcoes')">Opções</button><button id="tabAdicionais" class="tabbtn" onclick="mostrarAba('adicionais')">Adicionais</button><button id="tabAnalytics" class="tabbtn" onclick="mostrarAba('analytics')">Estatísticas</button></div></div><button id="btnSalvarTopo" class="primary" onclick="salvarTudo()">Salvar cardápio</button></div></header>
 <main id="mainCardapio" class="main">
   <section class="panel">
     <h2>Categorias</h2>
@@ -133,6 +133,30 @@
   </section>
 </main>
 
+
+<main id="mainAdicionais" class="main hidden">
+  <section class="panel">
+    <h2>Adicionais globais</h2>
+    <div class="toolbar"><button class="primary" onclick="novoAdicionalGlobal()">+ Adicional</button><button class="gray" onclick="carregarAdicionaisPedido()">Recarregar</button></div>
+    <div id="msgAdicionais" class="ok"></div>
+    <div class="warn">Crie adicionais uma vez e marque em quais itens eles devem aparecer. Exemplo: Bacon extra, cheddar extra, carne extra, molho extra.</div>
+    <div id="listaAdicionaisGlobais"></div>
+  </section>
+  <section class="panel">
+    <h2 id="tituloAdicionalGlobal">Novo / editar adicional</h2>
+    <label>Nome do adicional</label><input id="adicionalGlobalNome" placeholder="Ex: Bacon extra">
+    <div class="coupon-grid">
+      <div><label>Preço do adicional</label><input id="adicionalGlobalPreco" type="number" step="0.01" value="0"></div>
+      <div><label>Ordem</label><input id="adicionalGlobalOrdem" type="number" step="1" value="1"></div>
+    </div>
+    <label><input type="checkbox" id="adicionalGlobalAtivo" style="width:auto" checked> Adicional ativo</label>
+    <h3>Itens que podem receber este adicional</h3>
+    <div class="warn">Marque todos os produtos que devem mostrar este adicional no cardápio web.</div>
+    <div id="itensPermitidosAdicional" style="max-height:420px;overflow:auto;border:1px solid #e5e7eb;border-radius:14px;padding:10px"></div>
+    <div class="toolbar"><button class="primary" onclick="salvarAdicionalGlobal()">Salvar adicional</button><button class="danger" onclick="excluirAdicionalGlobalAtual()">Excluir adicional</button><button class="gray" onclick="limparAdicionalGlobal()">Limpar</button></div>
+  </section>
+</main>
+
 <main id="mainAnalytics" class="wide-main hidden">
   <section class="panel">
     <div class="spread">
@@ -230,6 +254,7 @@ const cardapioInicial = {
 const SENHA="GS1973";
 let database; try{firebase.initializeApp(firebaseConfig);database=firebase.database();}catch(e){alert("Erro Firebase: "+e.message)}
 let cardapio={categorias:{}}, categoriaAtual=null;
+let adicionaisPedido={}, adicionalAtual=null, listenerAdicionaisAtivo=false;
 
 let cupons={}, cupomAtual=null, listenerCuponsAtivo=false;
 let anuncios={}, anuncioAtual=null, listenerAnunciosAtivo=false;
@@ -239,17 +264,20 @@ function mostrarAba(aba){
   document.getElementById('mainCupons').classList.toggle('hidden', aba!=='cupons');
   document.getElementById('mainAnuncios').classList.toggle('hidden', aba!=='anuncios');
   document.getElementById('mainOpcoes').classList.toggle('hidden', aba!=='opcoes');
+  document.getElementById('mainAdicionais').classList.toggle('hidden', aba!=='adicionais');
   document.getElementById('mainAnalytics').classList.toggle('hidden', aba!=='analytics');
   document.getElementById('tabCardapio').classList.toggle('active', aba==='cardapio');
   document.getElementById('tabCupons').classList.toggle('active', aba==='cupons');
   document.getElementById('tabAnuncios').classList.toggle('active', aba==='anuncios');
   document.getElementById('tabOpcoes').classList.toggle('active', aba==='opcoes');
+  document.getElementById('tabAdicionais').classList.toggle('active', aba==='adicionais');
   document.getElementById('tabAnalytics').classList.toggle('active', aba==='analytics');
-  document.getElementById('btnSalvarTopo').textContent = aba==='cardapio' ? 'Salvar cardápio' : (aba==='cupons' ? 'Salvar cupom' : (aba==='anuncios' ? 'Salvar anúncio' : (aba==='opcoes' ? 'Salvar grupo' : 'Atualizar painel')));
-  document.getElementById('btnSalvarTopo').onclick = aba==='cardapio' ? salvarTudo : (aba==='cupons' ? salvarCupom : (aba==='anuncios' ? salvarAnuncio : (aba==='opcoes' ? salvarGrupoOpcao : carregarAnalytics)));
+  document.getElementById('btnSalvarTopo').textContent = aba==='cardapio' ? 'Salvar cardápio' : (aba==='cupons' ? 'Salvar cupom' : (aba==='anuncios' ? 'Salvar anúncio' : (aba==='opcoes' ? 'Salvar grupo' : (aba==='adicionais' ? 'Salvar adicional' : 'Atualizar painel'))));
+  document.getElementById('btnSalvarTopo').onclick = aba==='cardapio' ? salvarTudo : (aba==='cupons' ? salvarCupom : (aba==='anuncios' ? salvarAnuncio : (aba==='opcoes' ? salvarGrupoOpcao : (aba==='adicionais' ? salvarAdicionalGlobal : carregarAnalytics))));
   if(aba==='cupons') carregarCupons();
   if(aba==='anuncios'){ carregarAnuncios(); renderSelectItensAnuncio(); }
   if(aba==='opcoes') carregarOpcoesPedido();
+  if(aba==='adicionais') carregarAdicionaisPedido();
   if(aba==='analytics') carregarAnalytics();
 }
 function codigoLimpo(c){return String(c||'').trim().toUpperCase().replace(/\s/g,'')}
@@ -587,12 +615,91 @@ async function criarGruposPadraoOpcoes(){
 }
 
 function renderAdicionaisAdminHtml(i){
-  const ads=i.adicionais||{};
-  const rows=Object.entries(ads).map(([id,a])=>`<div class="row" data-adid="${id}" style="margin:6px 0"><input class="ad-nome" placeholder="Nome do adicional" value="${escapeHtml(a.nome||'')}" style="flex:1;min-width:160px"><input class="ad-preco" type="number" step="0.01" value="${Number(a.preco||0)}" style="width:120px"><label style="margin:0"><input class="ad-ativo" type="checkbox" style="width:auto" ${a.ativo!==false?'checked':''}> Ativo</label><button class="small danger" onclick="this.closest('.row').remove();salvarAdicionaisItem('${i.id}')">Excluir</button></div>`).join('');
-  return `<div style="border-top:1px solid #e5e7eb;margin-top:12px;padding-top:10px"><b>Adicionais deste item</b><div class="muted">Crie adicionais com preço. Eles aparecem como opcionais no cardápio web.</div><div id="ads_${i.id}">${rows}</div><div class="toolbar"><button class="small gray" onclick="novoAdicionalItem('${i.id}')">+ Adicional</button><button class="small primary" onclick="salvarAdicionaisItem('${i.id}')">Salvar adicionais</button></div></div>`;
+  return `<div style="border-top:1px solid #e5e7eb;margin-top:12px;padding-top:10px"><b>Adicionais</b><div class="muted">Agora os adicionais são gerenciados na aba <b>Adicionais</b>, onde você cria uma vez e marca quais itens usam.</div></div>`;
 }
 function novoAdicionalItem(itemId){const box=document.getElementById('ads_'+itemId); if(!box)return; const id=uid('ad'); box.insertAdjacentHTML('beforeend',`<div class="row" data-adid="${id}" style="margin:6px 0"><input class="ad-nome" placeholder="Nome do adicional" style="flex:1;min-width:160px"><input class="ad-preco" type="number" step="0.01" value="0" style="width:120px"><label style="margin:0"><input class="ad-ativo" type="checkbox" style="width:auto" checked> Ativo</label><button class="small danger" onclick="this.closest('.row').remove();salvarAdicionaisItem('${itemId}')">Excluir</button></div>`);}
 function salvarAdicionaisItem(itemId){const c=cardapio.categorias[categoriaAtual]; if(!c||!c.itens[itemId])return; const ads={}; [...document.querySelectorAll('#ads_'+itemId+' .row')].forEach((el,idx)=>{const id=el.dataset.adid||uid('ad'); const nome=el.querySelector('.ad-nome').value.trim(); if(!nome)return; ads[id]={id,nome,preco:Number(el.querySelector('.ad-preco').value||0),ativo:el.querySelector('.ad-ativo').checked,ordem:idx+1};}); c.itens[itemId].adicionais=ads; mostrarMsg('Adicionais atualizados. Clique em Salvar cardápio para publicar.');}
+
+
+// --- ADICIONAIS GLOBAIS ---
+function mostrarMsgAdicionais(t){const m=document.getElementById('msgAdicionais'); if(!m)return; m.textContent=t; m.style.display='block'; setTimeout(()=>m.style.display='none',2500)}
+function adicionaisArray(){return Object.values(adicionaisPedido||{}).sort((a,b)=>Number(a.ordem||999)-Number(b.ordem||999))}
+function iniciarListenerAdicionais(){
+  if(listenerAdicionaisAtivo || !database) return;
+  listenerAdicionaisAtivo=true;
+  database.ref('adicionais_pedido').on('value', s=>{
+    adicionaisPedido=s.val()||{};
+    renderAdicionaisGlobais();
+    if(adicionalAtual && adicionaisPedido[adicionalAtual]) selecionarAdicionalGlobal(adicionalAtual);
+  });
+}
+async function carregarAdicionaisPedido(){
+  iniciarListenerAdicionais();
+  const s=await database.ref('adicionais_pedido').once('value');
+  adicionaisPedido=s.val()||{};
+  renderAdicionaisGlobais();
+}
+function renderAdicionaisGlobais(){
+  const box=document.getElementById('listaAdicionaisGlobais'); if(!box)return;
+  const arr=adicionaisArray();
+  if(!arr.length){box.innerHTML='<p class="muted">Nenhum adicional cadastrado.</p>'; return;}
+  box.innerHTML=arr.map(a=>{
+    const qtdItens=Object.keys(a.itensPermitidos||{}).length;
+    return `<div class="item-card ${adicionalAtual===a.id?'selected':''}" onclick="selecionarAdicionalGlobal('${a.id}')">
+      <div class="spread"><div><b>${escapeHtml(a.nome||'Adicional')}</b><div class="muted">${moeda(a.preco||0)} • ${qtdItens} item(ns) vinculado(s)</div></div><span class="badge ${a.ativo===false?'off':'on'}">${a.ativo===false?'Inativo':'Ativo'}</span></div>
+    </div>`;
+  }).join('');
+}
+function limparAdicionalGlobal(){
+  adicionalAtual=null;
+  document.getElementById('tituloAdicionalGlobal').textContent='Novo / editar adicional';
+  document.getElementById('adicionalGlobalNome').value='';
+  document.getElementById('adicionalGlobalPreco').value='0';
+  document.getElementById('adicionalGlobalOrdem').value='1';
+  document.getElementById('adicionalGlobalAtivo').checked=true;
+  renderAdicionalGlobalEditor();
+}
+function novoAdicionalGlobal(){limparAdicionalGlobal(); document.getElementById('adicionalGlobalNome').focus();}
+function selecionarAdicionalGlobal(id){
+  adicionalAtual=id;
+  const a=adicionaisPedido[id]; if(!a)return;
+  document.getElementById('tituloAdicionalGlobal').textContent='Editando: '+(a.nome||'Adicional');
+  document.getElementById('adicionalGlobalNome').value=a.nome||'';
+  document.getElementById('adicionalGlobalPreco').value=Number(a.preco||0);
+  document.getElementById('adicionalGlobalOrdem').value=Number(a.ordem||1);
+  document.getElementById('adicionalGlobalAtivo').checked=a.ativo!==false;
+  renderAdicionalGlobalEditor();
+  renderAdicionaisGlobais();
+}
+function renderAdicionalGlobalEditor(){
+  const box=document.getElementById('itensPermitidosAdicional'); if(!box)return;
+  const a=adicionalAtual?adicionaisPedido[adicionalAtual]:null;
+  const permitidos=(a&&a.itensPermitidos)||{};
+  const itens=todasOpcoesItensCardapio();
+  box.innerHTML=itens.map(x=>`<label style="display:block;margin:7px 0;font-weight:600"><input type="checkbox" class="adicional-item-check" value="${x.key}" style="width:auto" ${permitidos[x.key]?'checked':''}> ${escapeHtml(x.catNome)} › <b>${escapeHtml(x.itemNome)}</b></label>`).join('') || '<p class="muted">Cadastre itens no cardápio primeiro.</p>';
+}
+async function salvarAdicionalGlobal(){
+  const nome=document.getElementById('adicionalGlobalNome').value.trim();
+  if(!nome) return alert('Informe o nome do adicional.');
+  const id=adicionalAtual||uid('adicional');
+  const itensPermitidos={};
+  [...document.querySelectorAll('.adicional-item-check')].forEach(ch=>{if(ch.checked)itensPermitidos[ch.value]=true;});
+  const adicional={id,nome,preco:Number(document.getElementById('adicionalGlobalPreco').value||0),ordem:Number(document.getElementById('adicionalGlobalOrdem').value||999),ativo:document.getElementById('adicionalGlobalAtivo').checked,itensPermitidos};
+  await database.ref('adicionais_pedido/'+id).set(adicional);
+  adicionalAtual=id;
+  await carregarAdicionaisPedido();
+  selecionarAdicionalGlobal(id);
+  mostrarMsgAdicionais('Adicional salvo com sucesso.');
+}
+async function excluirAdicionalGlobalAtual(){
+  if(!adicionalAtual) return alert('Selecione um adicional.');
+  if(!confirm('Excluir este adicional?')) return;
+  await database.ref('adicionais_pedido/'+adicionalAtual).remove();
+  adicionalAtual=null;
+  await carregarAdicionaisPedido();
+  limparAdicionalGlobal();
+  mostrarMsgAdicionais('Adicional excluído.');
+}
 
 </script>
 </body>
