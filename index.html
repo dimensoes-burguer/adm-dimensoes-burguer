@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Editor de Cardápio - Dimensões Burguer</title>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <style>
 :root{--green:#00c853;--purple:#6b21a8;--dark:#111827;--line:#e5e7eb;--bg:#f6f7fb}
@@ -23,10 +24,10 @@
 </head>
 <body>
 <div id="lock" class="lock"><div class="login">
-  <h1>🔒 Editor do Cardápio</h1><p>Digite a senha para editar o cardápio web.</p>
+  <h1>🔒 Editor do Cardápio</h1><p>Digite a senha do administrador Firebase para editar.</p>
   <input id="senha" type="password" placeholder="Senha">
   <button class="primary" style="width:100%" onclick="entrar()">Entrar</button>
-  <p class="muted">Senha inicial: GS1973</p>
+  <p class="muted">Acesso restrito à administração.</p>
 </div></div>
 <header class="top"><div class="top-inner"><div><h1>🌀 Painel Administrativo</h1><p>Controle cardápio, fotos, ordem dos itens, cupons, anúncios e estatísticas.</p><div class="tabs"><button id="tabCardapio" class="tabbtn active" onclick="mostrarAba('cardapio')">Cardápio</button><button id="tabCupons" class="tabbtn" onclick="mostrarAba('cupons')">Cupons</button><button id="tabAnuncios" class="tabbtn" onclick="mostrarAba('anuncios')">Anúncios</button><button id="tabOpcoes" class="tabbtn" onclick="mostrarAba('opcoes')">Opções</button><button id="tabAdicionais" class="tabbtn" onclick="mostrarAba('adicionais')">Adicionais</button><button id="tabAnalytics" class="tabbtn" onclick="mostrarAba('analytics')">Estatísticas</button></div></div><button id="btnSalvarTopo" class="primary" onclick="salvarTudo()">Salvar cardápio</button></div></header>
 <main id="mainCardapio" class="main">
@@ -251,7 +252,7 @@ const cardapioInicial = {
   }
 };
 
-const SENHA="GS1973";
+const ADMIN_EMAIL="admin@dimensoesburguer.com";
 let database; try{firebase.initializeApp(firebaseConfig);database=firebase.database();}catch(e){alert("Erro Firebase: "+e.message)}
 let cardapio={categorias:{}}, categoriaAtual=null;
 let adicionaisPedido={}, adicionalAtual=null, listenerAdicionaisAtivo=false;
@@ -423,7 +424,15 @@ async function alternarAnuncio(id){
   mostrarMsgAnuncio(a.ativo===false?'Anúncio ativado.':'Anúncio desativado.');
 }
 
-function entrar(){if(document.getElementById("senha").value===SENHA)document.getElementById("lock").style.display="none";else alert("Senha incorreta");}
+async function entrar(){
+  try{
+    await firebase.auth().signInWithEmailAndPassword(ADMIN_EMAIL,document.getElementById("senha").value);
+    document.getElementById("lock").style.display="none";
+    await carregar();
+  }catch(e){
+    alert("Senha incorreta ou usuário Firebase Auth não cadastrado.");
+  }
+}
 document.getElementById("senha").addEventListener("keydown",e=>{if(e.key==="Enter")entrar()});
 function uid(p="id"){return p+"_"+Date.now()+"_"+Math.floor(Math.random()*9999)}
 
@@ -482,11 +491,6 @@ function renderAnalyticsDetalhes(d){
   const itens=[['Anúncios exibidos',d.anuncios_exibidos],['Cliques em anúncios',d.cliques_anuncios],['Cupons usados',d.cupons_usados],['Itens adicionados ao carrinho',d.itens_adicionados],['Checkouts abertos',d.checkouts_abertos]];
   document.getElementById('analyticsDetalhes').innerHTML=itens.map(i=>`<div class="stat" style="display:block;margin-bottom:8px">${i[0]}: ${analyticsNum(i[1])}</div>`).join('');
 }
-if(database){
-  database.ref('analytics/online').on('value',()=>{if(!document.getElementById('mainAnalytics').classList.contains('hidden')) carregarAnalytics();});
-  setInterval(()=>{if(!document.getElementById('mainAnalytics').classList.contains('hidden')) carregarAnalytics();},30000);
-}
-
 function cats(){return Object.values(cardapio.categorias||{}).sort((a,b)=>(a.ordem||999)-(b.ordem||999))}
 function itens(cat){return Object.values(cat.itens||{}).sort((a,b)=>(a.ordem||999)-(b.ordem||999))}
 function moeda(n){return "R$ "+Number(n||0).toFixed(2).replace(".",",")}
@@ -534,7 +538,6 @@ function moverItem(id,dir){const c=cardapio.categorias[categoriaAtual]; const ar
 async function salvarTudo(){await database.ref("cardapio_web").set(cardapio); mostrarMsg("Cardápio salvo. O site atualiza na hora e o Python sincroniza em até 1 minuto.");}
 iniciarListenerCupons();
 iniciarListenerAnuncios();
-carregar();
 setTimeout(()=>carregarOpcoesPedido().catch(()=>{}),500);
 
 
